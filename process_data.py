@@ -25,7 +25,7 @@ bad_ids = [ 'BFA18GEN-N091-Weekday-00_049850_N..N65R', 'BFA18GEN-N091-Weekday-00
 all_trips = {}
 
 print('Reading trips...')
-with open("./gtfs/trips.txt", 'r') as trips_txt:
+with open("./data/trips.txt", 'r') as trips_txt:
     next(trips_txt)
     for line in trips_txt:
         line = line.split(",")
@@ -86,7 +86,7 @@ stations = {}
 reverse_stations = {}
 
 print('Importing stops...')
-with open("./gtfs/stops.txt", "r") as stops_file:
+with open("./data/stops.txt", "r") as stops_file:
     next(stops_file)
     for line in stops_file:
         line = line.split(",")
@@ -103,7 +103,7 @@ stops = []
 #5 stop_headsign, #6 pickup_type, #7 drop_off_type, #8 shape_dist_traveled 
 
 print('Importing Stop Times...')
-with open("./gtfs/stop_times.txt", 'r') as stop_times:
+with open("./data/stop_times.txt", 'r') as stop_times:
     next(stop_times)
     for line in stop_times:
         line = line.split(",")
@@ -346,7 +346,7 @@ averaged_edges_fixed['A65S#AL'] = {'A65N#AL': 820}
 transfers_from_file = {}
 
 print('Reading in transfers...')
-with open('./gtfs/transfers.txt', 'r') as transfer_file:
+with open('./data/transfers.txt', 'r') as transfer_file:
     next(transfer_file)
     for line in transfer_file:
         from_station, to, _, time = line.split(",")
@@ -486,17 +486,16 @@ print('Writing all data to disk.')
 with open('./station_names.json', 'w') as name_file:
     json.dump(name_to_stations, name_file, indent=2)
 
-with open('./all_names.json', 'w') as all_name_file:
+with open('./graph/all_names.json', 'w') as all_name_file:
     json.dump(list(name_to_stations.keys()), all_name_file, indent=2)
 
-
-with open('./graph_network.json', 'w') as graph_file:
+with open('./graph/graph_network.json', 'w') as graph_file:
     json.dump(node_children, graph_file, indent=2)
 
-with open('./costs.json', 'w') as cost_file:
+with open('./graph/costs.json', 'w') as cost_file:
     json.dump(weekday_edges, cost_file, indent=2)
 
-with open('./stations.json', 'w') as stations_file:
+with open('./graph/stations.json', 'w') as stations_file:
     json.dump(stations, stations_file, indent=2)
 
 # exported all of these which are then imported by the REST server to run the algo
