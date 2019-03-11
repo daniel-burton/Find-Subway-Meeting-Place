@@ -60,7 +60,7 @@ def make_parents(start):
     return parents
 
 
-def dijkstra(start, end):
+def dijkstra(start):
 
     def find_lowest_cost_node(costs):
         lowest_cost = float('inf')
@@ -88,19 +88,21 @@ def dijkstra(start, end):
         node = find_lowest_cost_node(costs)
     return [parents, costs]
 
-def find_station(name):
+def find_station(name, do_fuzz=False):
     name = parse.unquote_plus(name)
-    return station_names[name][0]
-    '''options = process.extract(name, all_names)
-    score = 0
-    pick = ''
-    for i in options:
-        option, _ = i
-        current = fuzz.ratio(name, option)
-        if current > score:
-            score = current
-            pick = option
-    return station_names[pick][0]'''
+    if do_fuzz == False:
+        return station_names[name][0]
+    else:
+        options = process.extract(name, all_names)
+        score = 0
+        pick = ''
+        for i in options:
+            option, _ = i
+            current = fuzz.ratio(name, option)
+            if current > score:
+                score = current
+                pick = option
+        return station_names[pick][0]
 
 def encode_name(name):
     return parse.quote_plus(name)
@@ -148,6 +150,14 @@ def return_route(start, end):
     route = parse_results(par, cos, start, end)
     time = cos[end] // 60
     return jsonify({'time':time, 'route':route, 'start':get_name(start), 'end':get_name(end)})
+
+@app.route('/api/meeting/<string:start1>/<string:start2>/', methods=['Get'])
+def return_meeting_place(start1, start2):
+    start1 = find_station(start1, True)
+    start2 = find_station(start2, True)
+    par1, cos1 = dijkstra(start1)
+    par2, cos2 = dijkstra(start2)
+    #add function to find meeting places here
 
 if __name__ == '__main__':
     app.run(debug=True)
