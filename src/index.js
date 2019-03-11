@@ -1,12 +1,24 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import * as serviceWorker from './serviceWorker';
 
-ReactDOM.render(<App />, document.getElementById('root'));
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://bit.ly/CRA-PWA
-serviceWorker.unregister();
+function makeURL(start, end){
+  return encodeURI('http://127.0.0.1:5000/api/route/${start}/${end}/');
+}
+
+async function getRoute(url){
+  output = await fetch(url)
+    .then(function(response) {
+      return response.json();
+    })
+    return output;
+}
+
+class App extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+}
+
+
+ReactDOM.render(<App/>, document.getElementById('root'));
