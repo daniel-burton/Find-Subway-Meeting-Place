@@ -1,21 +1,21 @@
-from flask import Flask, jsonify, abort, make_response, request, url_for
+from flask import Flask, jsonify
 import json
 from fuzzywuzzy import process, fuzz
 from urllib import parse
 
 app = Flask(__name__)
 
-with open('/home/dan/code/subway/station_names.json', 'r') as names_file:
+with open('../station_names.json', 'r') as names_file:
     station_names = json.load(names_file)
     all_names = list(station_names.keys())
 
-with open('/home/dan/code/subway/costs.json', 'r') as costs_file:
+with open('../costs.json', 'r') as costs_file:
     weekday_edges = json.load(costs_file)
 
-with open('/home/dan/code/subway/graph_network.json', 'r') as network_file:
+with open('../graph_network.json', 'r') as network_file:
     node_children = json.load(network_file)
 
-with open('/home/dan/code/subway/stations.json', 'r') as station_file:
+with open('../stations.json', 'r') as station_file:
     stations = json.load(station_file)
 
 
@@ -139,11 +139,6 @@ def print_results(trip):
             print('Next stop:')
             print('\t', get_name(stop) + " " + stop.split("#")[1])
         previous = stop 
-
-# start ='G22S#G'
-# end = '247S#5'
-# par, cos = dijkstra(start, end)
-# print_results(parse_results(par, cos, start, end))
 
 @app.route('/api/route/<string:start>/<string:end>/', methods=['GET'])
 def return_route(start, end):

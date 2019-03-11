@@ -4,7 +4,7 @@ from fuzzywuzzy import process, fuzz
 
 
 
-with open('/home/dan/code/subway/all_names.json', 'r') as names_file:
+with open('./all_names.json', 'r') as names_file:
     all_names = json.load(names_file)
 
 
