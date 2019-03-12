@@ -142,19 +142,21 @@ def print_results(trip):
             print('\t', get_name(stop) + " " + stop.split("#")[1])
         previous = stop 
 
-@app.route('/api/route/<string:start>/<string:end>/', methods=['GET'])
-def return_route(start, end):
-    start = find_station(start)
-    end = find_station(end)
-    par, cos = dijkstra(start, end)
+@app.route('/api/route/<string:do_fuzz>/<string:start>/<string:end>/', methods=['GET'])
+def return_route(start, end, do_fuzz):
+    do_fuzz = bool(do_fuzz)
+    start = find_station(start, do_fuzz)
+    end = find_station(end, do_fuzz)
+    par, cos = dijkstra(start)
     route = parse_results(par, cos, start, end)
     time = cos[end] // 60
     return jsonify({'time':time, 'route':route, 'start':get_name(start), 'end':get_name(end)})
 
-@app.route('/api/meeting/<string:start1>/<string:start2>/', methods=['Get'])
-def return_meeting_place(start1, start2):
-    start1 = find_station(start1, True)
-    start2 = find_station(start2, True)
+@app.route('/api/meeting/<string:do_fuzz>/<string:start1>/<string:start2>/', methods=['Get'])
+def return_meeting_place(start1, start2, do_fuzz):
+    do_fuzz = bool(do_fuzz)
+    start1 = find_station(start1, do_fuzz)
+    start2 = find_station(start2, do_fuzz)
     par1, cos1 = dijkstra(start1)
     par2, cos2 = dijkstra(start2)
     #add function to find meeting places here
