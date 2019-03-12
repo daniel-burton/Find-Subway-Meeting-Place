@@ -5,17 +5,17 @@ from urllib import parse
 
 app = Flask(__name__)
 
-with open('../station_names.json', 'r') as names_file:
+with open('../graph/station_names.json', 'r') as names_file:
     station_names = json.load(names_file)
     all_names = list(station_names.keys())
 
-with open('../costs.json', 'r') as costs_file:
+with open('../graph/costs.json', 'r') as costs_file:
     weekday_edges = json.load(costs_file)
 
-with open('../graph_network.json', 'r') as network_file:
+with open('../graph/graph_network.json', 'r') as network_file:
     node_children = json.load(network_file)
 
-with open('../stations.json', 'r') as station_file:
+with open('../graph/stations.json', 'r') as station_file:
     stations = json.load(station_file)
 
 
