@@ -19,6 +19,9 @@ with open('../graph/stations.json', 'r') as station_file:
     stations = json.load(station_file)
 
 
+def get_full_name(station_number):
+    return stations[station_number[:3]]['full_name']
+
 def get_name(station_number):
     return stations[station_number[:3]]['name']
 
@@ -40,27 +43,25 @@ def get_line_name(station):
 
 infinity = float('inf')
 
-def make_costs(start):
-    costs = {}
-    for item in node_children:
-        costs[item] = infinity
-    for neighbor in node_children[start]:
-        if get_name(neighbor) == get_name(start):
-            costs[neighbor] = 1
-        else:
-            costs[neighbor] = weekday_edges[start][neighbor]
-    return costs
-
-def make_parents(start):
-    parents = {}
-    for item in node_children:
-        parents[item] = None
-    for neighbor in node_children[start]:
-        parents[neighbor] = start
-    return parents
-
-
 def dijkstra(start):
+    def make_costs(start):
+        costs = {}
+        for item in node_children:
+            costs[item] = infinity
+        for neighbor in node_children[start]:
+            if get_name(neighbor) == get_name(start):
+                costs[neighbor] = 1
+            else:
+                costs[neighbor] = weekday_edges[start][neighbor]
+        return costs
+    
+    def make_parents(start):
+        parents = {}
+        for item in node_children:
+            parents[item] = None
+        for neighbor in node_children[start]:
+            parents[neighbor] = start
+        return parents
 
     def find_lowest_cost_node(costs):
         lowest_cost = float('inf')
@@ -104,9 +105,6 @@ def find_station(name, do_fuzz=False):
                 pick = option
         return station_names[pick][0]
 
-def encode_name(name):
-    return parse.quote_plus(name)
-
 def parse_results(parents, costs, started, ended):
     trip = []
     now = ended
@@ -131,6 +129,34 @@ def parse_results(parents, costs, started, ended):
         trip_dets.append(full)
         previous = new_line
     return trip_dets
+
+def simplify_costs(costs):
+    new = {}
+    for stop, cost in costs.items():
+        cost = cost//60
+        full = get_full_name(stop)
+        if full not in new:
+            new[full] = cost
+        elif cost < new[full]:
+            new[full] = cost
+    return new
+
+def find_meeting_place(cos1, cos2):
+    def recur_try(blur):
+        for stop, time in cos1.items():
+            if time + blur > cos2[stop] > time - blur:
+                potential.append((time, stop))
+        # for i in potential:
+        #     print(i)
+        return potential
+    cos1 = simplify_costs(cos1)
+    cos2 = simplify_costs(cos2)
+    blur_factor = 1
+    potential = []
+    while len(potential) < 1:
+        potential = recur_try(blur_factor)
+        blur_factor += 1
+    return potential
 
 def print_results(trip):
     previous = ' # '
@@ -159,7 +185,8 @@ def return_meeting_place(start1, start2, do_fuzz):
     start2 = find_station(start2, do_fuzz)
     par1, cos1 = dijkstra(start1)
     par2, cos2 = dijkstra(start2)
-    #add function to find meeting places here
+    potentials = find_meeting_place(cos1, cos2)
+    return jsonify({'potentials':potentials})
 
 if __name__ == '__main__':
     app.run(debug=True)

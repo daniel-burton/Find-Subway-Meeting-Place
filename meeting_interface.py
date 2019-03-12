@@ -54,12 +54,13 @@ def print_response(re):
         elif transfer == 1:
             print('\tTransfer to the {} Train at {}'.format(line, name))
 
-start = try_name('Enter your starting point: ')
-end = try_name('Enter your destination: ')
+point1 = try_name('Enter point one: ')
+point2 = try_name('Enter point two: ')
 
-start = parse.quote_plus(start)
-end = parse.quote_plus(end)
+point1 = parse.quote_plus(point1)
+point2 = parse.quote_plus(point2)
 
-url = 'http://127.0.0.1:5000/api/route/False/{}/{}/'.format(start, end)
+url = 'http://127.0.0.1:5000/api/meeting/False/{}/{}/'.format(point1, point2)
 response = requests.get(url)
-print_response(response.json())
+
+print(response.json())
