@@ -471,9 +471,10 @@ for node, children in node_children.items():
 
 
 name_to_stations = {}
+stations_with_full_name = dict(stations)
 # translates name (must be exact) to 
 
-print('Creating name to MTA ID station dictionary...')
+print('Creating name to MTA ID station dictionary... in both directions...')
 for node, children in node_children.items():
     comp = [get_line_name(child) for child in children]
     children_lines = sorted(list(set(comp)))
@@ -481,10 +482,14 @@ for node, children in node_children.items():
     if name not in name_to_stations:
         children = [child for child in children if get_name(child) == get_name(node)] + [node]
         name_to_stations[name] = children
+    stations_with_full_name[node[:3]]['full_name'] = name
 
 print('Writing all data to disk.')
 with open('./graph/station_names.json', 'w') as name_file:
     json.dump(name_to_stations, name_file, indent=2)
+
+# with open('./graph/station_to_name.json', 'w') as station_to_name_file:
+#     json.dump(station_to_name, station_to_name_file, indent=2)
 
 with open('./graph/all_names.json', 'w') as all_name_file:
     json.dump(list(name_to_stations.keys()), all_name_file, indent=2)
@@ -496,6 +501,6 @@ with open('./graph/costs.json', 'w') as cost_file:
     json.dump(weekday_edges, cost_file, indent=2)
 
 with open('./graph/stations.json', 'w') as stations_file:
-    json.dump(stations, stations_file, indent=2)
+    json.dump(stations_with_full_name, stations_file, indent=2)
 
 # exported all of these which are then imported by the REST server to run the algo
