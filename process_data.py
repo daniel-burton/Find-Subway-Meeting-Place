@@ -483,7 +483,7 @@ for node, children in node_children.items():
         name_to_stations[name] = children
 
 print('Writing all data to disk.')
-with open('./station_names.json', 'w') as name_file:
+with open('./graph/station_names.json', 'w') as name_file:
     json.dump(name_to_stations, name_file, indent=2)
 
 with open('./graph/all_names.json', 'w') as all_name_file:
