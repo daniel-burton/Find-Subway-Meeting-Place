@@ -54,7 +54,7 @@ def dijkstra(start):
             else:
                 costs[neighbor] = weekday_edges[start][neighbor]
         return costs
-    
+
     def make_parents(start):
         parents = {}
         for item in node_children:
@@ -146,8 +146,6 @@ def find_meeting_place(cos1, cos2):
         for stop, time in cos1.items():
             if time + blur > cos2[stop] > time - blur:
                 potential.append((time, stop))
-        # for i in potential:
-        #     print(i)
         return potential
     cos1 = simplify_costs(cos1)
     cos2 = simplify_costs(cos2)
@@ -156,7 +154,7 @@ def find_meeting_place(cos1, cos2):
     while len(potential) < 1:
         potential = recur_try(blur_factor)
         blur_factor += 1
-    return potential
+    return sorted(potential, key=lambda x: x[0])
 
 def print_results(trip):
     previous = ' # '
@@ -166,7 +164,7 @@ def print_results(trip):
         else:
             print('Next stop:')
             print('\t', get_name(stop) + " " + stop.split("#")[1])
-        previous = stop 
+        previous = stop
 
 @app.route('/api/route/<string:do_fuzz>/<string:start>/<string:end>/', methods=['GET'])
 def return_route(start, end, do_fuzz):
@@ -187,6 +185,8 @@ def return_meeting_place(start1, start2, do_fuzz):
     par2, cos2 = dijkstra(start2)
     potentials = find_meeting_place(cos1, cos2)
     return jsonify({'potentials':potentials})
+    #to do: should also return routes for both users to each potential
+    # maybe just return potentials and parents, then calculate route on front end?
 
 if __name__ == '__main__':
     app.run(debug=True)
