@@ -473,6 +473,7 @@ for node, children in node_children.items():
 
 name_to_stations = {}
 stations_with_full_name = dict(stations)
+# translates name (must be exact) to 
 
 print('Creating name to MTA ID station dictionary... in both directions...')
 for node, children in node_children.items():
@@ -487,6 +488,9 @@ for node, children in node_children.items():
 print('Writing all data to disk.')
 with open('./graph/station_names.json', 'w') as name_file:
     json.dump(name_to_stations, name_file, indent=2)
+
+# with open('./graph/station_to_name.json', 'w') as station_to_name_file:
+#     json.dump(station_to_name, station_to_name_file, indent=2)
 
 with open('./graph/all_names.json', 'w') as all_name_file:
     json.dump(list(name_to_stations.keys()), all_name_file, indent=2)

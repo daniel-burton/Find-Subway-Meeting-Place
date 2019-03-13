@@ -4,7 +4,7 @@ from fuzzywuzzy import process, fuzz
 
 
 
-with open('./all_names.json', 'r') as names_file:
+with open('./graph/all_names.json', 'r') as names_file:
     all_names = json.load(names_file)
 
 
@@ -35,13 +35,14 @@ def print_response(re):
     print('\nRoute from: {}\n to {}:\n'.format(re['start'], re['end']))
     print('Elapsed time: {} minutes.'.format(re['time']))
     previous = ''
-    final =  re['route'][-1]['name']
+    final =  re['route'][-1]['name'] + get_route_name(re['route'][-1]['line'])
     for stop in re['route']:
         name = stop['name']
         line = get_route_name(stop['line'])
+        precis = name + line # to make sure train is at actual final stop-- not another stop with same simple name
         transfer = stop['transfer']
 
-        if name == final:
+        if precis == final:
             print('Arrive at {}\n\n'.format(name))
             break
         elif transfer == 2:
@@ -59,6 +60,6 @@ end = try_name('Enter your destination: ')
 start = parse.quote_plus(start)
 end = parse.quote_plus(end)
 
-url = 'http://127.0.0.1:5000/api/route/{}/{}/'.format(start, end)
+url = 'http://127.0.0.1:5000/api/route/False/{}/{}/'.format(start, end)
 response = requests.get(url)
 print_response(response.json())

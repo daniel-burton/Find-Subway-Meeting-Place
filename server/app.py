@@ -19,6 +19,9 @@ with open('../graph/stations.json', 'r') as station_file:
     stations = json.load(station_file)
 
 
+def get_full_name(station_number):
+    return stations[station_number[:3]]['full_name']
+
 def get_name(station_number):
     return stations[station_number[:3]]['name']
 
@@ -40,27 +43,25 @@ def get_line_name(station):
 
 infinity = float('inf')
 
-def make_costs(start):
-    costs = {}
-    for item in node_children:
-        costs[item] = infinity
-    for neighbor in node_children[start]:
-        if get_name(neighbor) == get_name(start):
-            costs[neighbor] = 1
-        else:
-            costs[neighbor] = weekday_edges[start][neighbor]
-    return costs
+def dijkstra(start):
+    def make_costs(start):
+        costs = {}
+        for item in node_children:
+            costs[item] = infinity
+        for neighbor in node_children[start]:
+            if get_name(neighbor) == get_name(start):
+                costs[neighbor] = 1
+            else:
+                costs[neighbor] = weekday_edges[start][neighbor]
+        return costs
 
-def make_parents(start):
-    parents = {}
-    for item in node_children:
-        parents[item] = None
-    for neighbor in node_children[start]:
-        parents[neighbor] = start
-    return parents
-
-
-def dijkstra(start, end):
+    def make_parents(start):
+        parents = {}
+        for item in node_children:
+            parents[item] = None
+        for neighbor in node_children[start]:
+            parents[neighbor] = start
+        return parents
 
     def find_lowest_cost_node(costs):
         lowest_cost = float('inf')
@@ -88,22 +89,21 @@ def dijkstra(start, end):
         node = find_lowest_cost_node(costs)
     return [parents, costs]
 
-def find_station(name):
+def find_station(name, do_fuzz=False):
     name = parse.unquote_plus(name)
-    return station_names[name][0]
-    '''options = process.extract(name, all_names)
-    score = 0
-    pick = ''
-    for i in options:
-        option, _ = i
-        current = fuzz.ratio(name, option)
-        if current > score:
-            score = current
-            pick = option
-    return station_names[pick][0]'''
-
-def encode_name(name):
-    return parse.quote_plus(name)
+    if do_fuzz == False:
+        return station_names[name][0]
+    else:
+        options = process.extract(name, all_names)
+        score = 0
+        pick = ''
+        for i in options:
+            option, _ = i
+            current = fuzz.ratio(name, option)
+            if current > score:
+                score = current
+                pick = option
+        return station_names[pick][0]
 
 def parse_results(parents, costs, started, ended):
     trip = []
@@ -130,6 +130,32 @@ def parse_results(parents, costs, started, ended):
         previous = new_line
     return trip_dets
 
+def simplify_costs(costs):
+    new = {}
+    for stop, cost in costs.items():
+        cost = cost//60
+        full = get_full_name(stop)
+        if full not in new:
+            new[full] = cost
+        elif cost < new[full]:
+            new[full] = cost
+    return new
+
+def find_meeting_place(cos1, cos2):
+    def recur_try(blur):
+        for stop, time in cos1.items():
+            if time + blur > cos2[stop] > time - blur:
+                potential.append((time, stop))
+        return potential
+    cos1 = simplify_costs(cos1)
+    cos2 = simplify_costs(cos2)
+    blur_factor = 1
+    potential = []
+    while len(potential) < 1:
+        potential = recur_try(blur_factor)
+        blur_factor += 1
+    return sorted(potential, key=lambda x: x[0])
+
 def print_results(trip):
     previous = ' # '
     for stop in trip:
@@ -138,16 +164,29 @@ def print_results(trip):
         else:
             print('Next stop:')
             print('\t', get_name(stop) + " " + stop.split("#")[1])
-        previous = stop 
+        previous = stop
 
-@app.route('/api/route/<string:start>/<string:end>/', methods=['GET'])
-def return_route(start, end):
-    start = find_station(start)
-    end = find_station(end)
-    par, cos = dijkstra(start, end)
+@app.route('/api/route/<string:do_fuzz>/<string:start>/<string:end>/', methods=['GET'])
+def return_route(start, end, do_fuzz):
+    do_fuzz = bool(do_fuzz)
+    start = find_station(start, do_fuzz)
+    end = find_station(end, do_fuzz)
+    par, cos = dijkstra(start)
     route = parse_results(par, cos, start, end)
     time = cos[end] // 60
     return jsonify({'time':time, 'route':route, 'start':get_name(start), 'end':get_name(end)})
+
+@app.route('/api/meeting/<string:do_fuzz>/<string:start1>/<string:start2>/', methods=['Get'])
+def return_meeting_place(start1, start2, do_fuzz):
+    do_fuzz = bool(do_fuzz)
+    start1 = find_station(start1, do_fuzz)
+    start2 = find_station(start2, do_fuzz)
+    par1, cos1 = dijkstra(start1)
+    par2, cos2 = dijkstra(start2)
+    potentials = find_meeting_place(cos1, cos2)
+    return jsonify({'potentials':potentials})
+    #to do: should also return routes for both users to each potential
+    # maybe just return potentials and parents, then calculate route on front end?
 
 if __name__ == '__main__':
     app.run(debug=True)
