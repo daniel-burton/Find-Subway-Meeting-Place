@@ -10,11 +10,12 @@ from datetime import datetime
 ######################################
 
 
+bad_ids = []
 # bad_ids represents some odd Q train behavior I could not figure out other than
 # hardcoding the 'bad' trip labels in.
-bad_ids = [ 'BFA18GEN-N091-Weekday-00_049850_N..N65R', 'BFA18GEN-N091-Weekday-00_100200_N..N65R',
-            'BFA18GEN-N091-Weekday-00_045550_N..N65R', 'BFA18GEN-N091-Weekday-00_089800_N..N65R',
-            'BFA18GEN-N091-Weekday-00_093300_N..N69R', 'BFA18GEN-N091-Weekday-00_094500_N..N65R']
+# bad_ids = [ 'BFA18GEN-N091-Weekday-00_049850_N..N65R', 'BFA18GEN-N091-Weekday-00_100200_N..N65R',
+#             'BFA18GEN-N091-Weekday-00_045550_N..N65R', 'BFA18GEN-N091-Weekday-00_089800_N..N65R',
+#             'BFA18GEN-N091-Weekday-00_093300_N..N69R', 'BFA18GEN-N091-Weekday-00_094500_N..N65R']
 
 
 
@@ -40,9 +41,9 @@ with open("./data/trips.txt", 'r') as trips_txt:
 
 # helper functions: 
 def is_daytime(a_time):
-    """ensures a time is between 7AM and 8PM"""
-    NIGHTTIME = datetime.strptime("20:00:00", "%H:%M:%S")
-    MORNING = datetime.strptime("07:00:00", "%H:%M:%S")
+    """ensures a time is between 10AM and 7PM"""
+    NIGHTTIME = datetime.strptime("19:00:00", "%H:%M:%S")
+    MORNING = datetime.strptime("10:00:00", "%H:%M:%S")
 
     if a_time < MORNING or a_time > NIGHTTIME:
         return False
@@ -471,9 +472,9 @@ for node, children in node_children.items():
 
 
 name_to_stations = {}
-# translates name (must be exact) to 
+stations_with_full_name = dict(stations)
 
-print('Creating name to MTA ID station dictionary...')
+print('Creating name to MTA ID station dictionary... in both directions...')
 for node, children in node_children.items():
     comp = [get_line_name(child) for child in children]
     children_lines = sorted(list(set(comp)))
@@ -481,6 +482,7 @@ for node, children in node_children.items():
     if name not in name_to_stations:
         children = [child for child in children if get_name(child) == get_name(node)] + [node]
         name_to_stations[name] = children
+    stations_with_full_name[node[:3]]['full_name'] = name
 
 print('Writing all data to disk.')
 with open('./graph/station_names.json', 'w') as name_file:
@@ -496,6 +498,6 @@ with open('./graph/costs.json', 'w') as cost_file:
     json.dump(weekday_edges, cost_file, indent=2)
 
 with open('./graph/stations.json', 'w') as stations_file:
-    json.dump(stations, stations_file, indent=2)
+    json.dump(stations_with_full_name, stations_file, indent=2)
 
 # exported all of these which are then imported by the REST server to run the algo
