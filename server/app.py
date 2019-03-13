@@ -43,6 +43,7 @@ def get_line_name(station):
 
 infinity = float('inf')
 
+<<<<<<< Updated upstream
 def dijkstra(start):
     def make_costs(start):
         costs = {}
@@ -52,7 +53,7 @@ def dijkstra(start):
             if get_name(neighbor) == get_name(start):
                 costs[neighbor] = 1
             else:
-                costs[neighbor] = weekday_edges[start][neighbor]
+                costs[neighbor] = weekday_edges[start][neighbor][1]
         return costs
 
     def make_parents(start):
@@ -81,10 +82,11 @@ def dijkstra(start):
         cost = costs[node]
         neighbors = weekday_edges[node]
         for n in neighbors:
-            new_cost = cost + neighbors[n]
-            if costs[n] > new_cost:
-                costs[n] = new_cost
-                parents[n] = node
+            if neighbors[n][0] != 'w':
+                new_cost = cost + neighbors[n][1]
+                if costs[n] > new_cost:
+                    costs[n] = new_cost
+                    parents[n] = (node, neighbors[n][0])
         processed.append(node)
         node = find_lowest_cost_node(costs)
     return [parents, costs]
