@@ -32,27 +32,38 @@ def get_route_name(name):
 
 
 def print_response(re):
-    print('\nRoute from: {}\n to {}:\n'.format(re['start'], re['end']))
-    print('Elapsed time: {} minutes.'.format(re['time']))
+    announce = []
+    announce.append('\nRoute from: {}\n to {}:\n'.format(re['start'], re['end']))
+    announce.append('Elapsed time: {} minutes.'.format(re['time']))
+    ################## this is a test line #############
+    #print(re)
+    ################ end test ##############3
     previous = ''
-    final =  re['route'][-1]['name'] + get_route_name(re['route'][-1]['line'])
     for stop in re['route']:
         name = stop['name']
         line = get_route_name(stop['line'])
-        precis = name + line # to make sure train is at actual final stop-- not another stop with same simple name
-        transfer = stop['transfer']
-
-        if precis == final:
-            print('Arrive at {}\n\n'.format(name))
-            break
-        elif transfer == 2:
-            print('Start journey on the {} Train at {}'.format(line, name))
-        elif transfer == 0 and name == previous:
-            pass
-        elif transfer == 0:
-            print('\t\t...passing {}.'.format(name))
-        elif transfer == 1:
-            print('\tTransfer to the {} Train at {}'.format(line, name))
+        # precis = name + line # to make sure train is at actual final stop-- not another stop with same simple name
+        trip_type = stop['trip_type']
+        if trip_type == 's':
+            announce.append('Start journey on the {} Train at {}'.format(line, name))
+        # elif trip_type == 't' and name == previous:
+        #     pass
+        elif trip_type == 'r':
+            announce.append('\t\t...arrive at {}...'.format(name))
+        elif trip_type == 't':
+            if announce[-1][-3:] == '...':
+                announce.append('\tGet off at {}, then transfer to the {} Train at {}'.format(previous, line, name))
+            else:
+                announce.append('\tTransfer to the {} Train at {}'.format(line, name))
+        elif trip_type == 'w':
+            if announce[-1][-3:] == '...':
+                announce.append('\tGet off at {}, then walk to the {} Train at {}'.format(previous, line, name))
+            else:
+                announce.append('\tWalk to the {} Train at {}'.format(line, name))
+        previous = name
+    announce.append('Arrive at {}\n\n'.format(re['end']))
+    for i in announce:
+        print(i)
 
 start = try_name('Enter your starting point: ')
 end = try_name('Enter your destination: ')

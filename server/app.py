@@ -6,29 +6,37 @@ from urllib import parse
 app = Flask(__name__)
 
 with open('../graph/station_names.json', 'r') as names_file:
+    '''all_names is for fuzzy matching, station_names finds MTA id from english name'''
     station_names = json.load(names_file)
     all_names = list(station_names.keys())
 
 with open('../graph/costs.json', 'r') as costs_file:
+    '''dictionary of [start][end]: mode, cost'''
     weekday_edges = json.load(costs_file)
 
 with open('../graph/graph_network.json', 'r') as network_file:
+    '''dictionary of [start]: list of child nodes'''
     node_children = json.load(network_file)
 
 with open('../graph/stations.json', 'r') as station_file:
+    '''for each station (including super and sub stations), dictionary of name, full_name, lat, lon, parent'''
+    # i can remove sub stations? i might only need super stations. Don't need lat or long for now... but could need later?
     stations = json.load(station_file)
 
-
 def get_full_name(station_number):
+    '''get full name (including line names: like "Franklin Ave 2-3-4-5"'''
     return stations[station_number[:3]]['full_name']
 
 def get_name(station_number):
+    '''get short name like "Franklin Ave"'''
     return stations[station_number[:3]]['name']
 
 def get_line(name):
+    '''get line name, like "L" '''
     return name.split('#')[1]
 
 def get_line_name(station):
+    '''prettify the line name for some weird trains'''
     station = get_line(station)
     if station =='GS':
         return 'GC_Shuttle'
@@ -43,9 +51,11 @@ def get_line_name(station):
 
 infinity = float('inf')
 
-<<<<<<< Updated upstream
 def dijkstra(start):
+    '''goes through the full graph, starting at starting point, and returns costs and parents'''
     def make_costs(start):
+        '''create new costs dictionary of cost to get to every other station from start
+           initialized as infinite, unless a direct neighbor of the starting station'''
         costs = {}
         for item in node_children:
             costs[item] = infinity
@@ -57,14 +67,17 @@ def dijkstra(start):
         return costs
 
     def make_parents(start):
+        '''make blank dictionary of parents (the best station to get to a given station from'''
         parents = {}
         for item in node_children:
             parents[item] = None
         for neighbor in node_children[start]:
-            parents[neighbor] = start
+            move_type = weekday_edges[start][neighbor][0]
+            parents[neighbor] = (start, move_type)
         return parents
 
     def find_lowest_cost_node(costs):
+        '''finds the current lowest cost node'''
         lowest_cost = float('inf')
         lowest_cost_node = None
         for node in costs:
@@ -82,16 +95,24 @@ def dijkstra(start):
         cost = costs[node]
         neighbors = weekday_edges[node]
         for n in neighbors:
-            if neighbors[n][0] != 'w':
-                new_cost = cost + neighbors[n][1]
-                if costs[n] > new_cost:
-                    costs[n] = new_cost
-                    parents[n] = (node, neighbors[n][0])
+            #if neighbors[n][0] != 'w': #ignore walk edges?
+            new_cost = cost + neighbors[n][1]
+            if costs[n] > new_cost:
+                costs[n] = new_cost
+                parents[n] = (node, neighbors[n][0])
         processed.append(node)
         node = find_lowest_cost_node(costs)
     return [parents, costs]
 
 def find_station(name, do_fuzz=False):
+    '''return the MTA ID of the start station
+        do_fuzz determines whether fuzzy matching is needed.
+        I plan on there being autocomplete on the front end,
+        so normally do_fuzz should be false.
+        Room for improvement: currently it just returns the
+        first option out of possible sub-stations... resulting
+        in "start at Atlantic on the 4, then transfer to the 2
+        at Atlantic..." situations'''
     name = parse.unquote_plus(name)
     if do_fuzz == False:
         return station_names[name][0]
@@ -108,28 +129,34 @@ def find_station(name, do_fuzz=False):
         return station_names[pick][0]
 
 def parse_results(parents, costs, started, ended):
+    '''takes the parents, costs, start and end point and
+       returns the actual route, derived from parents.
+       Goes backwards: find parent of endpoint, then parent
+       of that station, etc.
+
+    type:  s     | w    | t        | r    | e
+    means: start | walk | transfer | rail | end'''
+
     trip = []
-    now = ended
-    previous = ' # '
-    while now != started:
+    now = (ended, 'e')
+    while now[0] != started:
         trip.append(now)
-        now = parents[now]
+        try:
+            now = parents[now[0]]
+        except:
+            print('error: ',now)
     trip.append(now)
-
+    #first_type = now[1]
     trip_dets = []
-
-    previous = ' # '
+    started = 0
+    trip_type = 's'
     for stop in trip[::-1]:
-        new_line = get_line(stop)
-        if previous == ' # ':
-            transfer = 2
-        elif new_line == previous:
-            transfer = 0
-        else:
-            transfer = 1
-        full = {'line':get_line(stop), 'name':get_name(stop), 'transfer':transfer}
+        full = {'line':get_line(stop[0]), 'name':get_name(stop[0]), 'trip_type':trip_type}
+        # if started == 0:
+        #     trip_type = first_type
         trip_dets.append(full)
-        previous = new_line
+        trip_type = stop[1]
+        started = 1
     return trip_dets
 
 def simplify_costs(costs):
@@ -144,6 +171,7 @@ def simplify_costs(costs):
     return new
 
 def find_meeting_place(cos1, cos2):
+    '''find meeting place by calculating dijkstra from both start points'''
     def recur_try(blur):
         for stop, time in cos1.items():
             if time + blur > cos2[stop] > time - blur:
@@ -158,15 +186,15 @@ def find_meeting_place(cos1, cos2):
         blur_factor += 1
     return sorted(potential, key=lambda x: x[0])
 
-def print_results(trip):
-    previous = ' # '
-    for stop in trip:
-        if get_line(stop) != get_line(previous):
-            print("Transfer to...")
-        else:
-            print('Next stop:')
-            print('\t', get_name(stop) + " " + stop.split("#")[1])
-        previous = stop
+# def print_results(trip):
+#     previous = ' # '
+#     for stop in trip:
+#         if get_line(stop) != get_line(previous):
+#             print("Transfer to...")
+#         else:
+#             print('Next stop:')
+#             print('\t', get_name(stop) + " " + stop.split("#")[1])
+#         previous = stop
 
 @app.route('/api/route/<string:do_fuzz>/<string:start>/<string:end>/', methods=['GET'])
 def return_route(start, end, do_fuzz):
