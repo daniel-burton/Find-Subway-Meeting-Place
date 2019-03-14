@@ -87,7 +87,7 @@ def dijkstra(start):
                 lowest_cost_node = node
         return lowest_cost_node
 
-    processed = []
+    processed = set() 
     parents = make_parents(start)
     costs = make_costs(start)
     node = find_lowest_cost_node(costs)
@@ -100,7 +100,7 @@ def dijkstra(start):
             if costs[n] > new_cost:
                 costs[n] = new_cost
                 parents[n] = (node, neighbors[n][0])
-        processed.append(node)
+        processed.add(node)
         node = find_lowest_cost_node(costs)
     return [parents, costs]
 
@@ -217,6 +217,9 @@ def return_meeting_place(start1, start2, do_fuzz):
     return jsonify({'potentials':potentials})
     #to do: should also return routes for both users to each potential
     # maybe just return potentials and parents, then calculate route on front end?
+
+def test_case():
+    return_route('Franklin Av 2-3-4-5', "Flushing - Main St 7", False)
 
 if __name__ == '__main__':
     app.run(debug=True)

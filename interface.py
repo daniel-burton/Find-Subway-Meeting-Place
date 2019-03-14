@@ -61,7 +61,7 @@ def print_response(re):
             else:
                 announce.append('\tWalk to the {} Train at {}'.format(line, name))
         previous = name
-    announce.append('Arrive at {}\n\n'.format(re['end']))
+    announce.append("You've arrived at {}.\n\n".format(re['end']))
     for i in announce:
         print(i)
 
