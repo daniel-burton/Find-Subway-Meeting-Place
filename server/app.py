@@ -196,24 +196,32 @@ def find_meeting_place(cos1, cos2):
 #             print('\t', get_name(stop) + " " + stop.split("#")[1])
 #         previous = stop
 
+def find_meeting_place(start1, start2):
+    par1, cos1 = dijkstra(start1)
+    par2, cos2 = dijkstra(start2)
+    potentials = find_meeting_place(cos1, cos2)
+    return potentials
+
+def get_route(start, end):
+    par, cos = dijkstra(start)
+    route = parse_results(par, cos, start, end)
+    time = cos[end] // 60
+    return {'time':time, 'route':route, 'start':get_name(start), 'end':get_name(end)}
+
 @app.route('/api/route/<string:do_fuzz>/<string:start>/<string:end>/', methods=['GET'])
 def return_route(start, end, do_fuzz):
     do_fuzz = bool(do_fuzz)
     start = find_station(start, do_fuzz)
     end = find_station(end, do_fuzz)
-    par, cos = dijkstra(start)
-    route = parse_results(par, cos, start, end)
-    time = cos[end] // 60
-    return jsonify({'time':time, 'route':route, 'start':get_name(start), 'end':get_name(end)})
+    result = get_route(start, end)
+    return jsonify(result)
 
 @app.route('/api/meeting/<string:do_fuzz>/<string:start1>/<string:start2>/', methods=['Get'])
 def return_meeting_place(start1, start2, do_fuzz):
     do_fuzz = bool(do_fuzz)
     start1 = find_station(start1, do_fuzz)
     start2 = find_station(start2, do_fuzz)
-    par1, cos1 = dijkstra(start1)
-    par2, cos2 = dijkstra(start2)
-    potentials = find_meeting_place(cos1, cos2)
+    potentials = find_meeting_place(start1, start2)
     return jsonify({'potentials':potentials})
     #to do: should also return routes for both users to each potential
     # maybe just return potentials and parents, then calculate route on front end?
