@@ -91,7 +91,7 @@ with open("./data/stops.txt", "r") as stops_file:
     next(stops_file)
     for line in stops_file:
         line = line.split(",")
-        stations[line[0]] = {"name": line[2], "parent": line[9].strip()}
+        stations[line[0]] = {"name": line[2], "parent": line[9].strip(),'lat': float(line[4]), 'lon': float(line[5])}
         reverse_stations[line[2]] = line[0][:3]
 
 
@@ -333,13 +333,20 @@ for start, ends in averaged_edges.items():
             reverse_end = reverse_stop(end)
             if reverse_end not in averaged_edges:
                 averaged_edges_fixed[reverse_end] = {}
-                print(reverse_end)
+                #print(reverse_end)
             if reverse_start not in averaged_edges_fixed[reverse_end]:
                 averaged_edges_fixed[reverse_end][reverse_start] = averaged_edges[start][end]
-                print('\t', reverse_start, '\t', averaged_edges[start][end])
+                #print('\t', reverse_start, '\t', averaged_edges[start][end])
 
 #for some reason this station is not getting added-- add it here
 averaged_edges_fixed['A65S#AL'] = {'A65N#AL': 820}
+
+# create next_stop_by_stop: for every stop, the next stop only.
+next_stop_by_stop = {}
+
+for start, ends in averaged_edges_fixed.items():
+    for end in ends:
+        next_stop_by_stop[start] = end
 
 
 # for line in transfers get the data and create transfer_edges
@@ -389,7 +396,7 @@ for start, ends in averaged_edges.items():
     parent = start[:3]
     for sub_stop in sub_stops[parent]:
         neighbor = sub_stop[:3]
-        time = transfers_with_self_transfers[parent][neighbor]
+        time = ('t', transfers_with_self_transfers[parent][neighbor])
         if sub_stop != start:
             edges_with_self_transfers[start][sub_stop] = time
 
@@ -405,7 +412,7 @@ for start, ends in edges_with_self_transfers.items():
             edges_with_self_transfers_complete[end] = {}
             for sub in sub_stops[parent]:
                 if sub != end:
-                    edges_with_self_transfers_complete[end][sub] = transfers_with_self_transfers[parent][parent]
+                    edges_with_self_transfers_complete[end][sub] = ('t', transfers_with_self_transfers[parent][parent])
 
 
 # note: transfers_with_self_transfers can have multiple transfers for 1 origin
@@ -420,20 +427,79 @@ for start, ends in edges_with_self_transfers.items():
             for sub in sub_stops[end]:
                  if sub not in edges_with_all_transfers[start]:
                     if time < 500:
-                        time = time + 500
-                    edges_with_all_transfers[start][sub] = time
+                        time_tup = ('t', time + 500)
+                    edges_with_all_transfers[start][sub] = time_tup
 
 # remove transfers to exact same train like "get off this northbound 4, get on the next one"
 
-weekday_edges = {}
+weekday_edges_pre_walking = {}
 
 print('Removing erroneous transfers...')
 for start, ends in edges_with_all_transfers.items():
     for end, time in ends.items():
         if end != start:
-            if start not in weekday_edges:
-                weekday_edges[start] = {}
-            weekday_edges[start][end] = time
+            if start not in weekday_edges_pre_walking:
+                weekday_edges_pre_walking[start] = {}
+            weekday_edges_pre_walking[start][end] = time_tup
+            
+# create a dict of all neighbors of a given station-- including after a transfer
+# This can be used to filter walk stations. Note that stations are NAME, not MTA ID
+# This is so all sub-stations are filtered (EG, separate platforms at atlantic)
+
+within_one_stop = {}
+
+# use sub_stops to find sub stops
+# query graph_without_transfers to find where they all lead
+# for all sub stops, add all of the next stops
+
+for stop, subs in sub_stops.items():
+    neighbors = []
+    for sub in subs:
+        try:
+            next_stop = next_stop_by_stop[sub][:3]
+            if next_stop not in neighbors:
+                neighbors.append(get_name(next_stop_by_stop[sub][:3]))
+        except:
+            pass
+    within_one_stop[stop[:3]] = neighbors
+    
+    
+# add walking transfers 
+
+# 1. find distance nevins to hoyt-- 1/3 of a mile-- this is the max walk distance. It's about 6 minutes
+
+nevins = [40.688246, -73.980492]
+hoyt = [40.690545, -73.985065]
+
+a_sq = (nevins[0] - hoyt[0]) ** 2
+b_sq = (nevins[1] - hoyt[1]) ** 2
+
+max_walk = math.sqrt(a_sq + b_sq)
+max_walk_time = 360
+wait_time = 300
+walk_per_second = max_walk_time / max_walk
+
+# 2. measure distance of every station to every other station!?
+
+weekday_edges = dict(weekday_edges_pre_walking)
+
+count = 0
+
+for start, ends in weekday_edges_pre_walking.items():
+    for end in weekday_edges_pre_walking:
+        if get_name(end) != get_name(start) and end not in ends and end[:3] not in within_one_stop[start[:3]]:
+            start_lat, start_long = stations[start[:4]]['lat'], stations[start[:4]]['lon']
+            end_lat, end_long = stations[end[:4]]['lat'], stations[end[:4]]['lon']
+            a_sq = (start_lat - end_lat) ** 2
+            b_sq = (start_long - end_long) ** 2
+            distance = math.sqrt(a_sq + b_sq)
+            # 3. Do the math to translate into time, add to edges as ('w', time)
+            if distance <= max_walk:
+                #print(get_name(start),' ', start, '\t to: ', get_name(end), ' ', end)
+                count += 1
+                time = math.ceil(walk_per_second * distance) + wait_time
+                weekday_edges[start][end] = ('w', time)
+print('Added {} walking edges'.format(count))
 
 # build node_children: for each node, all neighboring nodes (note that edges are directional)
 
@@ -477,7 +543,7 @@ stations_with_full_name = dict(stations)
 
 print('Creating name to MTA ID station dictionary... in both directions...')
 for node, children in node_children.items():
-    comp = [get_line_name(child) for child in children]
+    comp = [get_line_name(child) for child in children if get_name(child) == get_name(node)]
     children_lines = sorted(list(set(comp)))
     name = get_name(node) + ' ' + '-'.join(children_lines)
     if name not in name_to_stations:

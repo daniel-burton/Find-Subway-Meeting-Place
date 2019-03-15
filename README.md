@@ -12,5 +12,3 @@ The flask app in /server will start a RESTful API that responds to start/end que
 The python interface, interface.py, is a command line front end with fuzzy matching of user input to station names.
 
 Next step: a React web app that pings the API.
-
-Currently the python script that processes the data is incomplete-- I'm migrating and cleaning code from a very messy jupyter notebook.
