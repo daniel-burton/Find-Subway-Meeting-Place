@@ -7,7 +7,7 @@ The current graph builder works for the 21 December 2018 NYC Subway GTFS, as dow
 
 The bash script get_gtfs.sh will create a 'data' folder, download and extract the appropriate data, then process the data into a graph in the new folder 'graph'.
 
-`reqs.txt` includes the requirements-- just the requirements for `flask` plus `fuzzywuzzy` for string matching
+`req.txt` includes the requirements-- just the requirements for `flask` plus `fuzzywuzzy` for string matching
 
 The flask app in /server will start a RESTful API that responds to start/end queries with a route JSON.
 
