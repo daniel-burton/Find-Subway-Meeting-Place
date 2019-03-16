@@ -9,6 +9,7 @@ with open('./graph/all_names.json', 'r') as names_file:
 
 
 def try_name(prompt):
+    '''Confirm the fuzzy match of user input'''
     user_typed = input(prompt)
     options = process.extract(user_typed, all_names)
     for i in options:
@@ -19,7 +20,8 @@ def try_name(prompt):
 
 
 def get_route_name(name):
-    if name == 'AR' or name== 'AL':
+    '''fix odd route names'''
+    if name == 'AR' or name== 'AL': #AL and AR are the branches of the A train
         return 'A'
     elif 'GC' in name:
         return 'Grand Central Shuttle'
@@ -32,12 +34,10 @@ def get_route_name(name):
 
 
 def print_response(re):
+    '''parse the JSON response from the server and print the route directions'''
     announce = []
     announce.append('\nRoute from: {}\n to {}:\n'.format(re['start'], re['end']))
     announce.append('Elapsed time: {} minutes.'.format(re['time']))
-    ################## this is a test line #############
-    #print(re)
-    ################ end test ##############3
     previous = ''
     for stop in re['route']:
         name = stop['name']
@@ -65,12 +65,12 @@ def print_response(re):
     for i in announce:
         print(i)
 
-start = try_name('Enter your starting point: ')
-end = try_name('Enter your destination: ')
-
-start = parse.quote_plus(start)
-end = parse.quote_plus(end)
-
-url = 'http://127.0.0.1:5000/api/route/False/{}/{}/'.format(start, end)
-response = requests.get(url)
-print_response(response.json())
+if __name__ =='__main__':
+    start = try_name('Enter your starting point: ')
+    end = try_name('Enter your destination: ')
+    # turn the station strings into URL-formatted strings
+    start = parse.quote_plus(start)
+    end = parse.quote_plus(end)
+    url = 'http://127.0.0.1:5000/api/route/False/{}/{}/'.format(start, end)
+    response = requests.get(url)
+    print_response(response.json())
