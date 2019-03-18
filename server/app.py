@@ -87,7 +87,7 @@ def dijkstra(start):
                 lowest_cost_node = node
         return lowest_cost_node
 
-    processed = set() 
+    processed = set()
     parents = make_parents(start)
     costs = make_costs(start)
     node = find_lowest_cost_node(costs)
@@ -208,13 +208,18 @@ def get_route(start, end):
     time = cos[end] // 60
     return {'time':time, 'route':route, 'start':get_name(start), 'end':get_name(end)}
 
+def make_response(content):
+    response = flask.Response(content)
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
+
 @app.route('/api/route/<string:do_fuzz>/<string:start>/<string:end>/', methods=['GET'])
 def return_route(start, end, do_fuzz):
     do_fuzz = bool(do_fuzz)
     start = find_station(start, do_fuzz)
     end = find_station(end, do_fuzz)
     result = get_route(start, end)
-    return jsonify(result)
+    return make_response(jsonify(result))
 
 @app.route('/api/meeting/<string:do_fuzz>/<string:start1>/<string:start2>/', methods=['Get'])
 def return_meeting_place(start1, start2, do_fuzz):
@@ -222,7 +227,7 @@ def return_meeting_place(start1, start2, do_fuzz):
     start1 = find_station(start1, do_fuzz)
     start2 = find_station(start2, do_fuzz)
     potentials = find_meeting_place(start1, start2)
-    return jsonify({'potentials':potentials})
+    return make_response(jsonify({'potentials':potentials}))
     #to do: should also return routes for both users to each potential
     # maybe just return potentials and parents, then calculate route on front end?
 
