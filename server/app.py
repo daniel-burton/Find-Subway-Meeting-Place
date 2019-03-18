@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, make_response
 import json
 from fuzzywuzzy import process, fuzz
 from urllib import parse
@@ -170,37 +170,25 @@ def simplify_costs(costs):
             new[full] = cost
     return new
 
-def find_meeting_place(cos1, cos2):
+def find_meeting_place(start1, start2, count):
     '''find meeting place by calculating dijkstra from both start points'''
-    def recur_try(blur):
-        for stop, time in cos1.items():
-            if time + blur > cos2[stop] > time - blur:
+    def recur_try(blur, costs_1, costs_2):
+        '''look for potential meeting places, with travel time within "blur" distance'''
+        for stop, time in costs_1.items():
+            if time + blur > costs_2[stop] > time - blur:
                 potential.append((time, stop))
         return potential
-    cos1 = simplify_costs(cos1)
-    cos2 = simplify_costs(cos2)
+    parents_1, costs_1 = dijkstra(start1)
+    parents_2, costs_2 = dijkstra(start2)
+    costs_1 = simplify_costs(costs_1)
+    costs_2 = simplify_costs(costs_2)
     blur_factor = 1
     potential = []
-    while len(potential) < 1:
-        potential = recur_try(blur_factor)
+    while len(potential) <= count:
+        potential = recur_try(blur_factor, costs_1, costs_2)
         blur_factor += 1
     return sorted(potential, key=lambda x: x[0])
 
-# def print_results(trip):
-#     previous = ' # '
-#     for stop in trip:
-#         if get_line(stop) != get_line(previous):
-#             print("Transfer to...")
-#         else:
-#             print('Next stop:')
-#             print('\t', get_name(stop) + " " + stop.split("#")[1])
-#         previous = stop
-
-def find_meeting_place(start1, start2):
-    par1, cos1 = dijkstra(start1)
-    par2, cos2 = dijkstra(start2)
-    potentials = find_meeting_place(cos1, cos2)
-    return potentials
 
 def get_route(start, end):
     par, cos = dijkstra(start)
@@ -208,10 +196,12 @@ def get_route(start, end):
     time = cos[end] // 60
     return {'time':time, 'route':route, 'start':get_name(start), 'end':get_name(end)}
 
-def make_response(content):
-    response = flask.Response(content)
+
+def package_response(content):
+    response = make_response(content)
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
+
 
 @app.route('/api/route/<string:do_fuzz>/<string:start>/<string:end>/', methods=['GET'])
 def return_route(start, end, do_fuzz):
@@ -219,17 +209,18 @@ def return_route(start, end, do_fuzz):
     start = find_station(start, do_fuzz)
     end = find_station(end, do_fuzz)
     result = get_route(start, end)
-    return make_response(jsonify(result))
+    return package_response(jsonify(result))
 
-@app.route('/api/meeting/<string:do_fuzz>/<string:start1>/<string:start2>/', methods=['Get'])
-def return_meeting_place(start1, start2, do_fuzz):
+@app.route('/api/meeting/<string:do_fuzz>/<string:start1>/<string:start2>/<int:count>', methods=['Get'])
+def return_meeting_place(start1, start2, do_fuzz, count):
     do_fuzz = bool(do_fuzz)
     start1 = find_station(start1, do_fuzz)
     start2 = find_station(start2, do_fuzz)
-    potentials = find_meeting_place(start1, start2)
-    return make_response(jsonify({'potentials':potentials}))
+    potentials = find_meeting_place(start1, start2, count)
+    return package_response(jsonify({'potentials':potentials}))
     #to do: should also return routes for both users to each potential
     # maybe just return potentials and parents, then calculate route on front end?
+    # the issue of it selecting a random start/stop substation...
 
 def test_case():
     return_route('Franklin Av 2-3-4-5', "Flushing - Main St 7", False)
