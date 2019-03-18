@@ -35,6 +35,7 @@ def get_route_name(name):
 
 def print_response(re):
     '''parse the JSON response from the server and print the route directions'''
+    print(re)
     announce = []
     announce.append('\nRoute from: {}\n to {}:\n'.format(re['start'], re['end']))
     announce.append('Elapsed time: {} minutes.'.format(re['time']))
@@ -46,8 +47,6 @@ def print_response(re):
         trip_type = stop['trip_type']
         if trip_type == 's':
             announce.append('Start journey on the {} Train at {}'.format(line, name))
-        # elif trip_type == 't' and name == previous:
-        #     pass
         elif trip_type == 'r':
             announce.append('\t\t...arrive at {}...'.format(name))
         elif trip_type == 't':
@@ -60,8 +59,9 @@ def print_response(re):
                 announce.append('\tGet off at {}, then walk to the {} Train at {}'.format(previous, line, name))
             else:
                 announce.append('\tWalk to the {} Train at {}'.format(line, name))
+        elif trip_type == 'e':
+            announce.append("Arrive at {}.\n\n".format(re['end']))
         previous = name
-    announce.append("You've arrived at {}.\n\n".format(re['end']))
     for i in announce:
         print(i)
 

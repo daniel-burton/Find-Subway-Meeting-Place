@@ -287,7 +287,8 @@ for start, ends in filtered_pre_avg.items():
             maximum = len(times)
             maximum_key = end
     values = edges_pre_avg[start][maximum_key]
-    averaged_edges[start][maximum_key] = math.ceil(sum(values) / len(values))
+    tup = ('r', math.ceil(sum(values) / len(values)))
+    averaged_edges[start][maximum_key] = tup
 
 # get sub-stops for every parent stop-- a sub stop represents one train that stops there 
 # EG Nostrand Avenue 3 train stop has 2 sub_stops: 3 train Outbound and Inbound
@@ -339,7 +340,7 @@ for start, ends in averaged_edges.items():
                 #print('\t', reverse_start, '\t', averaged_edges[start][end])
 
 #for some reason this station is not getting added-- add it here
-averaged_edges_fixed['A65S#AL'] = {'A65N#AL': 820}
+averaged_edges_fixed['A65S#AL'] = {'A65N#AL': ('r', 820)}
 
 # create next_stop_by_stop: for every stop, the next stop only.
 next_stop_by_stop = {}
@@ -392,7 +393,7 @@ for stop in empty_ends:
 edges_with_self_transfers= dict(averaged_edges_fixed)
 
 print('Adding self-transfers that were missing from file...')
-for start, ends in averaged_edges.items():
+for start, ends in averaged_edges_fixed.items():
     parent = start[:3]
     for sub_stop in sub_stops[parent]:
         neighbor = sub_stop[:3]
@@ -436,12 +437,12 @@ weekday_edges_pre_walking = {}
 
 print('Removing erroneous transfers...')
 for start, ends in edges_with_all_transfers.items():
-    for end, time in ends.items():
+    for end, time_tup in ends.items():
         if end != start:
             if start not in weekday_edges_pre_walking:
                 weekday_edges_pre_walking[start] = {}
             weekday_edges_pre_walking[start][end] = time_tup
-            
+
 # create a dict of all neighbors of a given station-- including after a transfer
 # This can be used to filter walk stations. Note that stations are NAME, not MTA ID
 # This is so all sub-stations are filtered (EG, separate platforms at atlantic)
@@ -462,8 +463,8 @@ for stop, subs in sub_stops.items():
         except:
             pass
     within_one_stop[stop[:3]] = neighbors
-    
-    
+
+
 # add walking transfers 
 
 # 1. find distance nevins to hoyt-- 1/3 of a mile-- this is the max walk distance. It's about 6 minutes
@@ -476,7 +477,7 @@ b_sq = (nevins[1] - hoyt[1]) ** 2
 
 max_walk = math.sqrt(a_sq + b_sq)
 max_walk_time = 360
-wait_time = 300
+wait_time = 420
 walk_per_second = max_walk_time / max_walk
 
 # 2. measure distance of every station to every other station!?

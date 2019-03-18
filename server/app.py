@@ -20,7 +20,6 @@ with open('../graph/graph_network.json', 'r') as network_file:
 
 with open('../graph/stations.json', 'r') as station_file:
     '''for each station (including super and sub stations), dictionary of name, full_name, lat, lon, parent'''
-    # i can remove sub stations? i might only need super stations. Don't need lat or long for now... but could need later?
     stations = json.load(station_file)
 
 def get_full_name(station_number):
@@ -158,6 +157,7 @@ def parse_results(parents, costs, started, ended):
         trip_dets.append(full)
         trip_type = stop[1]
         started = 1
+    trip_dets[-1]['trip_type'] = 'e'
     return trip_dets
 
 def simplify_costs(costs):
