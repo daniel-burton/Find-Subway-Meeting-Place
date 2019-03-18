@@ -147,6 +147,7 @@ def parse_results(parents, costs, started, ended):
             print('error: ',now)
     trip.append(now)
     #first_type = now[1]
+
     trip_dets = []
     started = 0
     trip_type = 's'
@@ -170,24 +171,35 @@ def simplify_costs(costs):
             new[full] = cost
     return new
 
-def find_meeting_place(start1, start2, count):
+def find_meeting_place(start_1, start_2, count):
     '''find meeting place by calculating dijkstra from both start points'''
+
     def recur_try(blur, costs_1, costs_2):
         '''look for potential meeting places, with travel time within "blur" distance'''
+        potentials = []
         for stop, time in costs_1.items():
-            if time + blur > costs_2[stop] > time - blur:
-                potential.append((time, stop))
-        return potential
-    parents_1, costs_1 = dijkstra(start1)
-    parents_2, costs_2 = dijkstra(start2)
+            time_to_other = costs_2[stop]
+            if time + blur > time_to_other > time - blur:
+                potentials.append({'name': stop, 'time':time, 'time_2':time_to_other})
+        return potentials
+
+    parents_1, costs_1 = dijkstra(start_1)
+    parents_2, costs_2 = dijkstra(start_2)
     costs_1 = simplify_costs(costs_1)
     costs_2 = simplify_costs(costs_2)
     blur_factor = 1
     potential = []
-    while len(potential) <= count:
+    while len(potential) < count:
+        """look for endpoint with same travel time,
+        retrying with looser parameters until sufficent count"""
         potential = recur_try(blur_factor, costs_1, costs_2)
         blur_factor += 1
-    return sorted(potential, key=lambda x: x[0])
+    results = sorted(potential, key=lambda x: x['name'])[:count]
+    for end in results:
+        # append directions from both start points
+        end['route_1'] = parse_results(parents_1, costs_1, start_1, find_station(end['name']))
+        end['route_2'] = parse_results(parents_2, costs_2, start_2, find_station(end['name']))
+    return results
 
 
 def get_route(start, end):
@@ -211,12 +223,12 @@ def return_route(start, end, do_fuzz):
     result = get_route(start, end)
     return package_response(jsonify(result))
 
-@app.route('/api/meeting/<string:do_fuzz>/<string:start1>/<string:start2>/<int:count>', methods=['Get'])
-def return_meeting_place(start1, start2, do_fuzz, count):
+@app.route('/api/meeting/<string:do_fuzz>/<string:start_1>/<string:start_2>/<int:count>', methods=['Get'])
+def return_meeting_place(start_1, start_2, do_fuzz, count):
     do_fuzz = bool(do_fuzz)
-    start1 = find_station(start1, do_fuzz)
-    start2 = find_station(start2, do_fuzz)
-    potentials = find_meeting_place(start1, start2, count)
+    start_1 = find_station(start_1, do_fuzz)
+    start_2 = find_station(start_2, do_fuzz)
+    potentials = find_meeting_place(start_1, start_2, count)
     return package_response(jsonify({'potentials':potentials}))
     #to do: should also return routes for both users to each potential
     # maybe just return potentials and parents, then calculate route on front end?
