@@ -9,11 +9,13 @@ The bash script get_gtfs.sh will create a 'data' folder, download and extract th
 
 `req.txt` includes the requirements-- just the requirements for `flask` plus `fuzzywuzzy` for string matching
 
-The flask app in /server will start a RESTful API that responds to start/end queries with a route JSON.
+The flask app in /server will start an API that responds to route or meeting place queries with a route JSON.
 
 The python interface, interface.py, is a command line front end with fuzzy matching of user input to station names. meeting_interface.py is a work in progress that will do the same.
 
 Next steps: 
+  - solve some bugs having to do with walking-- it's telling the user to walk in odd places
+  - find a better workflow for using Jupyter Notebooks with git, as well as transferring code between notebooks and python scripts
   - deploy the server.
   - create a React web app that pings the API.
   - create a simple visualization of the routes / found meeting places for the web app. 
