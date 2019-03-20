@@ -140,24 +140,20 @@ def parse_results(parents, costs, started, ended):
     now = (ended, 'e')
     while now[0] != started:
         trip.append(now)
-        try:
-            now = parents[now[0]]
-        except:
-            print('error: ',now)
+        now = parents[now[0]]
     trip.append(now)
-    #first_type = now[1]
 
     trip_dets = []
-    started = 0
     trip_type = 's'
     for stop in trip[::-1]:
         full = {'line':get_line(stop[0]), 'name':get_name(stop[0]), 'trip_type':trip_type}
-        # if started == 0:
-        #     trip_type = first_type
         trip_dets.append(full)
         trip_type = stop[1]
-        started = 1
     trip_dets[-1]['trip_type'] = 'e'
+
+    if trip_dets[1]['trip_type'] == 't':
+        trip_dets.pop(0)
+        trip_dets[0]['trip_type'] = 's'
     return trip_dets
 
 def simplify_costs(costs):
