@@ -1,0 +1,12 @@
+.Inputs {
+  display:inline;
+  position:relative;
+  margin: 1em;
+  width:80em;
+  border: 1px solid gray;
+  padding:.5em;
+  }
+
+.StationInput {
+  margin: .5em;
+  }

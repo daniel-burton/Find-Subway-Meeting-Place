@@ -3,12 +3,12 @@ import './Minimum.css';
 
 function Minimum({onChange, value}) {
   return (
-    <div>
+    <div className='Minimum'>
       <label>
-        Minimum number of meeting spots:
+       Minimum number of meeting spots:
         <input type='range' min='1' max='10' onChange={onChange}/>
       </label>
-      <p class='minimum_label'>{value}</p>
+      <p className='minimum_label'>{value}</p>
     </div>
   );
 }

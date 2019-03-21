@@ -1,5 +1,12 @@
+.Minimum {
+  margin:1em;
+  margin-top: 1em;
+  margin-bottom:1em;
+  }
+
 .minimum_label {
   display: inline;
   margin-left: .8em;
+  margin-right: .8em;
   size:1em;
 }

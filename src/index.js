@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import StationInput from './StationInput';
 import Minimum from './Minimum';
+import stationNames from './stationNames';
 
 
 function makeURL(start1, start2, minimum){
@@ -20,12 +21,13 @@ async function getRoute(url){
 class App extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {'one': '', 'two': ''};
+    this.state = {'one': '', 'two': '', 'minimum': 1};
   }
 
-  handleChange= (event) => {
+  handleChange = (event) => {
     let newState = {};
     newState[event.target.id] = event.target.value;
+    console.log(newState);
     this.setState(newState);
   }
 
@@ -47,10 +49,11 @@ class App extends React.Component {
   render() {
     return (
       <div className='App'>
-        <StationInput id='one' value={this.state['one']} onChange={this.handleChange} label='First endpoint:'/>
-        <StationInput id='two' value={this.state['two']} onChange={this.handleChange} label='Second endpoint:'/>
+        <h1>Enter your starting points to get suggested meeting places.</h1>
+        <StationInput id='one' value={this.state['one']} onChange={this.handleChange} label='First endpoint:' optionList={stationNames} onSelection={this.onSelection}/>
+        <StationInput id='two' value={this.state['two']} onChange={this.handleChange} label='Second endpoint:' optionList={stationNames} onSelection={this.onSelection}/>
         <Minimum value={this.state['minimum']} onChange={this.handleRange}/>
-        <button onClick={this.handleSubmit}>Click me!</button>
+        <button onClick={this.handleSubmit}>Calculate</button>
       </div>
     );
   }
