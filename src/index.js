@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import StationInput from './StationInput';
 import Minimum from './Minimum';
+import Results from './Results';
 import stationNames from './stationNames';
 import './index.css';
 
@@ -22,7 +23,10 @@ async function getRoute(url){
 class App extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {'one': '', 'two': '', 'minimum': 1, 'oneActive':0, 'twoActive':0};
+    this.state = {'one': '', 'two': '', 'minimum': 1, 
+                  'oneActive': 0, 'twoActive': 0,
+                  'submitted': 0 
+                 };
   }
 
   handleChange = (event) => {
@@ -48,10 +52,15 @@ class App extends React.Component {
   handleSubmit = async (event) => {
     let one = this.state.one;
     let two = this.state.two;
+    let newState = {}
     let minimum = this.state.minimum;
     let response = await getRoute(makeURL(one, two, minimum))
-      .then( response => { console.log(response); this.state.response = response});
-    console.log(response);
+      .then( response => {
+          console.log(response.potentials);
+          newState['results'] = response.potentials;
+          newState['submitted'] = 1;
+          this.setState(newState);
+        });
   }
 
   handleRange = (event) => {
@@ -63,11 +72,16 @@ class App extends React.Component {
   render() {
     return (
       <div className='App'>
-        <h1>Enter your starting points to get suggested meeting places.</h1>
-        <StationInput id='one' parentId='one' value={this.state['one']} onChange={this.handleChange} label='First endpoint:' optionList={stationNames} onSelectItem={this.onSelectItem} active={this.state.oneActive}/>
-        <StationInput id='two' parentId='two' value={this.state['two']} onChange={this.handleChange} label='Second endpoint:' optionList={stationNames} onSelectItem={this.onSelectItem} active={this.state.twoActive}/>
-        <Minimum value={this.state['minimum']} onChange={this.handleRange}/>
-        <button onClick={this.handleSubmit}>Calculate</button>
+        <div className='Controls'>
+          <h1>Enter your starting points to get suggested meeting places.</h1>
+          <StationInput id='one' parentId='one' value={this.state['one']} onChange={this.handleChange} label='First endpoint:' optionList={stationNames} onSelectItem={this.onSelectItem} active={this.state.oneActive}/>
+          <StationInput id='two' parentId='two' value={this.state['two']} onChange={this.handleChange} label='Second endpoint:' optionList={stationNames} onSelectItem={this.onSelectItem} active={this.state.twoActive}/>
+          <Minimum value={this.state['minimum']} onChange={this.handleRange}/>
+          <button onClick={this.handleSubmit}>Calculate</button>
+        </div>
+        <div className='Results'>
+        {this.state.submitted === 1 ? <Results potentials={this.state.results} startOne={this.state.one} startTwo={this.state.two}/> : ''}
+        </div>
       </div>
     );
   }
