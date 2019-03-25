@@ -1,7 +1,7 @@
 # Unnamed Subway App
 ## A React frontend for finding a time-equidistant meeting place between two starting subway stops.
 
-####Currently:
+###Currently:
 * Input your two starting stations, with autocomplete to ensure they're spelled perfectly
 * Select how many meeting place suggestions you'd like to get
 * Get results from my web API
@@ -10,7 +10,7 @@
   * travel time for each starting point
   * travel route from each starting point
 
-####To Do:
+###To Do:
 * Display the possible meeting places
 * Click on one to be given the best subway route to that stop from each starting point (correct subway line 'bullet' icon etc)
 * Display meeting places on a map
