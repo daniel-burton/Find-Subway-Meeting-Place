@@ -4,7 +4,7 @@ import SuggestionItem from './SuggestionItem';
 
 class AutocompleteBox extends React.Component {
   constructor(props) {
-    // optionList, onSelection, inputValue 
+    // optionList, onSelectItemion, inputValue, parentId
     super(props);
     this.state = {'highlighted':'', 'suggestions': []};
   }
@@ -15,14 +15,10 @@ class AutocompleteBox extends React.Component {
       <div className='AutocompleteBox'>
        { this.props.optionList.filter(word => re.test(word))
           .map((item, index) => {
-          return (<SuggestionItem value={item} key={index}
-          // onSuggestionClick={onSuggestionClick} //replace input value with clicked value
-          // onSuggestionHover={onSuggestionHover} //highlight/select suggestion
-          // onEnterKey={onEnterKey} //replace input value with selected value
-          // onDownKey={onDownKey} //move selection down one
-          // onUpKey={onUpKey} //move selection up one
-          // onLoseFocus={onLoseFocus} //
-          //highlighted = {item == this.state.highlighted ? 1 : 0} //highlight selected item
+          return (<SuggestionItem value={item} 
+            key={this.props.parentId + '-' + index} 
+            id={this.props.parentId + '-' + index}
+            onClick={this.props.onSelectItem}
           />)})}
       </div>
     )

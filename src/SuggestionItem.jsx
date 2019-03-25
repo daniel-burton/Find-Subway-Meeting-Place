@@ -1,9 +1,10 @@
 import React from 'react';
 import './SuggestionItem.css';
 
-function SuggestionItem({value, id}) {
+function SuggestionItem({ value, id, onClick }) {
   return(
-    <p className='SuggestionItem' id={id}>{value}</p>
+    <p className='SuggestionItem' id={id} onClick={onClick}
+      >{value}</p>
   );
 }
 

@@ -1,7 +1,10 @@
 .SuggestionItem {
   font-size:.8em;
-  background:#f7f7f9;
+  background:white;
   width:auto;
   margin:0;
   padding:.1em;
+}
+.SuggestionItem:hover {
+  background:#e8e8e8;
 }
