@@ -4,7 +4,7 @@
 ###Currently:
 * Input your two starting stations, with autocomplete to ensure they're spelled perfectly
 * Select how many meeting place suggestions you'd like to get
-* Get results from my web API
+* Get results from my web API (https://github.com/daniel-burton/gtfs_graph_builder)
 * Display the results as a JSON (in the console)
   * meeting places
   * travel time for each starting point
