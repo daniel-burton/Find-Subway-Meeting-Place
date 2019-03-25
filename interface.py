@@ -3,7 +3,6 @@ import requests, json
 from fuzzywuzzy import process, fuzz
 
 
-
 with open('./graph/all_names.json', 'r') as names_file:
     all_names = json.load(names_file)
 
@@ -35,7 +34,6 @@ def get_route_name(name):
 
 def print_response(re):
     '''parse the JSON response from the server and print the route directions'''
-    print(re)
     announce = []
     announce.append('\nRoute from: {}\n to {}:\n'.format(re['start'], re['end']))
     announce.append('Elapsed time: {} minutes.'.format(re['time']))

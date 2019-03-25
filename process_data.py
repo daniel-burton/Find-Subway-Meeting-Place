@@ -1,5 +1,7 @@
-import csv, json, math
+import csv, json, math, os
 from datetime import datetime
+
+WAIT_TIME = 600 #constant to represent wait time when transferring
 
 ######################################
 # This file processes an NYC MTA GTFS dataset and creates a graph representing 
@@ -10,13 +12,11 @@ from datetime import datetime
 ######################################
 
 
-bad_ids = []
 # bad_ids represents some odd Q train behavior I could not figure out other than
 # hardcoding the 'bad' trip labels in.
-# bad_ids = [ 'BFA18GEN-N091-Weekday-00_049850_N..N65R', 'BFA18GEN-N091-Weekday-00_100200_N..N65R',
-#             'BFA18GEN-N091-Weekday-00_045550_N..N65R', 'BFA18GEN-N091-Weekday-00_089800_N..N65R',
-#             'BFA18GEN-N091-Weekday-00_093300_N..N69R', 'BFA18GEN-N091-Weekday-00_094500_N..N65R']
-
+bad_ids = [ 'BFA18GEN-N091-Weekday-00_049850_N..N65R', 'BFA18GEN-N091-Weekday-00_100200_N..N65R',
+            'BFA18GEN-N091-Weekday-00_045550_N..N65R', 'BFA18GEN-N091-Weekday-00_089800_N..N65R',
+            'BFA18GEN-N091-Weekday-00_093300_N..N69R', 'BFA18GEN-N091-Weekday-00_094500_N..N65R']
 
 
 # get trips from trips.txt-- includes unique id, route, service, and "sign"
@@ -37,12 +37,11 @@ with open("./data/trips.txt", 'r') as trips_txt:
         if trip not in all_trips:
             all_trips[trip] = {"route": route, "service": service, 'sign': sign}
 
-# results in {'AFA18GEN-1037-Sunday-00_000600_1..S03R': {'route': '1', 'service': 'AFA18GEN-1037-Sunday-00', 'sign':...
 
 # helper functions: 
 def is_daytime(a_time):
-    """ensures a time is between 10AM and 7PM"""
-    NIGHTTIME = datetime.strptime("19:00:00", "%H:%M:%S")
+    """ensures a time is between 10AM and 3PM-- 'normal' schedule"""
+    NIGHTTIME = datetime.strptime("15:00:00", "%H:%M:%S")
     MORNING = datetime.strptime("10:00:00", "%H:%M:%S")
 
     if a_time < MORNING or a_time > NIGHTTIME:
@@ -91,11 +90,11 @@ with open("./data/stops.txt", "r") as stops_file:
     next(stops_file)
     for line in stops_file:
         line = line.split(",")
-        stations[line[0]] = {"name": line[2], "parent": line[9].strip(),'lat': float(line[4]), 'lon': float(line[5])}
+        stations[line[0]] = {"name": line[2], "parent": line[9].strip(), 'lat': float(line[4]), 'lon': float(line[5])}
         reverse_stations[line[2]] = line[0][:3]
 
 
-#read stop_times.txt and get what we can from it on the first pass
+# read stop_times.txt and do some filtering
 
 stops = []
 
@@ -243,6 +242,7 @@ for stop in stops:
 
         if len(previous_stop) > 3:
             # somehow some '' previous stops were sneaking past the check above
+            # TODO fix this
             if previous_stop not in edges_pre_avg:
                 edges_pre_avg[previous_stop] = {}
             if now not in edges_pre_avg[previous_stop]:
@@ -252,6 +252,7 @@ for stop in stops:
                 edges_pre_avg[now] = {}
     previous_route = route
 print('\tDone.')
+
 
 # This was an issue because of the way I parsed stops-- endpoints were missing
 # for instance, the last Outward-Bound stop on the 4 is Utica,
@@ -267,6 +268,9 @@ for start in edges_pre_avg:
         empty_ends.append(start)
     else:
         filtered_pre_avg[start] = edges_pre_avg[start]
+
+
+# In[12]:
 
 
 #filter for most common path (to delete uncommon branches or trains that unexpectedly go local)
@@ -287,7 +291,7 @@ for start, ends in filtered_pre_avg.items():
             maximum = len(times)
             maximum_key = end
     values = edges_pre_avg[start][maximum_key]
-    tup = ('r', math.ceil(sum(values) / len(values)))
+    tup = ('r' , math.ceil(sum(values) / len(values)))
     averaged_edges[start][maximum_key] = tup
 
 # get sub-stops for every parent stop-- a sub stop represents one train that stops there 
@@ -312,7 +316,7 @@ for start, ends in averaged_edges.items():
         if end not in sub_stops[end_parent]:
             sub_stops[end_parent].append(end)
 
-# MTA treats some stops as multiple parent stops-- like the 2-3-4-5 vs D-N-R 
+# MTA treats some stops as multiple parent stops-- like the 2-3-4-5 vs D-N-R
 # platforms at Atlantic. sub_stops only includes sub_stops of one parent
 
 
@@ -320,7 +324,7 @@ for start, ends in averaged_edges.items():
 # trip is also in averaged_edges. If you can get there from here, you can also
 # get here from there.
 
-averaged_edges_fixed = dict(averaged_edges)
+averaged_edges_fixed = {}
 
 def reverse_stop(stop):
     #returns the opposite direction train
@@ -329,26 +333,34 @@ def reverse_stop(stop):
 print('Ensuring all edges are mirrored-- you can get here from there.')
 for start, ends in averaged_edges.items():
     reverse_start = reverse_stop(start)
-    if start != 'H01N#AR': #H01N is the Aqueduct Racetrack-- only Northbound trains stop there
-        for end, time in ends.items():
+    averaged_edges_fixed[start] = {}
+    if start not in ['H01N#AR', 'H01S#AR']: #ignore these Rockaway stops the that have direction-dependent paths
+        for end, time_tup in ends.items():
+            averaged_edges_fixed[start][end] = time_tup
             reverse_end = reverse_stop(end)
-            if reverse_end not in averaged_edges:
-                averaged_edges_fixed[reverse_end] = {}
-                #print(reverse_end)
-            if reverse_start not in averaged_edges_fixed[reverse_end]:
-                averaged_edges_fixed[reverse_end][reverse_start] = averaged_edges[start][end]
-                #print('\t', reverse_start, '\t', averaged_edges[start][end])
+            if get_line(reverse_start) == get_line(reverse_end):
+                if reverse_end not in averaged_edges_fixed and reverse_end not in ['H01N#AR', 'H01S#AR']:#ditto above
+                    #print(get_line(reverse_end), "From: ",reverse_end, get_name(reverse_end))
+                    averaged_edges_fixed[reverse_end] = {}
+                if reverse_end not in ['H01N#AR', 'H01S#AR', 'H02N#AR', 'H02S#AR'] and reverse_start not in averaged_edges_fixed[reverse_end]:
+                    #print('\t to:', reverse_start, get_name(reverse_start))
+                    averaged_edges_fixed[reverse_end][reverse_start] = time_tup
 
-#for some reason this station is not getting added-- add it here
-averaged_edges_fixed['A65S#AL'] = {'A65N#AL': ('r', 820)}
+#for some reason this station is not getting added-- add it here TODO fix
+averaged_edges_fixed['A65S#AL'] = {'A65N#AL': ('t', 820)}
+#create graph_without_transfers: a dictionary of ONLY the next stop from a given stop. no transfers.
+
+averaged_edges_fixed['M11S#J'].pop('M16S#J') #somehow an express train was sneaking through the filter above... TODO fix
 
 # create next_stop_by_stop: for every stop, the next stop only.
 next_stop_by_stop = {}
 
 for start, ends in averaged_edges_fixed.items():
     for end in ends:
-        next_stop_by_stop[start] = end
-
+        if start not in next_stop_by_stop:
+            next_stop_by_stop[start] = []
+        if end not in next_stop_by_stop[start]:
+            next_stop_by_stop[start].append(end)
 
 # for line in transfers get the data and create transfer_edges
 
@@ -356,36 +368,36 @@ transfers_from_file = {}
 
 print('Reading in transfers...')
 with open('./data/transfers.txt', 'r') as transfer_file:
-    next(transfer_file)
+    next(transfer_file)#skip header
     for line in transfer_file:
         from_station, to, _, time = line.split(",")
         if from_station != '140':
             if from_station not in transfers_from_file:
                 transfers_from_file[from_station] = {}
             if to not in transfers_from_file[from_station] and '140' not in to:
-                transfers_from_file[from_station][to] = int(time) + 300
+                transfers_from_file[from_station][to] = int(time) + WAIT_TIME
 
 
-# some transfer edges don't exist for self-transfer... find those and add with a 500 second wait
+# some transfer edges don't exist for self-transfer... find those and add with a wait
 transfers_with_self_transfers = dict(transfers_from_file)
 
 
 print('Adding self-transfers from transfer file...')
 for stop in sub_stops:
     if stop not in transfers_with_self_transfers:
-        transfers_with_self_transfers[stop] = {stop: 500}
+        transfers_with_self_transfers[stop] = {stop: WAIT_TIME}
     else:
         if stop not in transfers_with_self_transfers[stop]:
-            transfers_with_self_transfers[stop][stop] = 500
+            transfers_with_self_transfers[stop][stop] = WAIT_TIME
 
 print('Ensuring all end-of-line stops exist for transfers...')
 for stop in empty_ends:
     parent = stop[:3]
     if stop not in transfers_with_self_transfers:
-        transfers_with_self_transfers[parent] = {parent: 500}
+        transfers_with_self_transfers[parent] = {parent: WAIT_TIME}
     else:
         if stop not in transfers_with_self_transfers[stop]:
-            transfers_with_self_transfers[parent][parent] = 500
+            transfers_with_self_transfers[parent][parent] = WAIT_TIME #**
 
 
 # add self-transfers to all edges
@@ -393,13 +405,14 @@ for stop in empty_ends:
 edges_with_self_transfers= dict(averaged_edges_fixed)
 
 print('Adding self-transfers that were missing from file...')
-for start, ends in averaged_edges_fixed.items():
+for start, ends in averaged_edges.items():
     parent = start[:3]
     for sub_stop in sub_stops[parent]:
         neighbor = sub_stop[:3]
-        time = ('t', transfers_with_self_transfers[parent][neighbor])
+        time_tup = ('t', transfers_with_self_transfers[parent][neighbor])
         if sub_stop != start:
-            edges_with_self_transfers[start][sub_stop] = time
+            edges_with_self_transfers[start][sub_stop] = time_tup
+
 
 # make sure transfer edges that are transfer -only- (IE, they exist in Edges as ends but not starts) are added
 
@@ -412,8 +425,10 @@ for start, ends in edges_with_self_transfers.items():
         if end not in edges_with_self_transfers:
             edges_with_self_transfers_complete[end] = {}
             for sub in sub_stops[parent]:
-                if sub != end:
+                if sub != end: #* line below
                     edges_with_self_transfers_complete[end][sub] = ('t', transfers_with_self_transfers[parent][parent])
+
+edges_with_self_transfers['A65S#AL'] = {'A65N#AL': ('t', 820)}
 
 
 # note: transfers_with_self_transfers can have multiple transfers for 1 origin
@@ -427,11 +442,14 @@ for start, ends in edges_with_self_transfers.items():
         for end, time in transfers_with_self_transfers[parent].items():
             for sub in sub_stops[end]:
                  if sub not in edges_with_all_transfers[start]:
-                    if time < 500:
-                        time_tup = ('t', time + 500)
+                    if time < WAIT_TIME:
+                        time_tup = ('t', time + WAIT_TIME)
+                    else:
+                        time_tup = ('t', time)
                     edges_with_all_transfers[start][sub] = time_tup
 
-# remove transfers to exact same train like "get off this northbound 4, get on the next one"
+
+# filter out self-transfers like 'get off this 4 train, wait 5 minutes, get on the next one' that shouldn't be considered
 
 weekday_edges_pre_walking = {}
 
@@ -443,31 +461,58 @@ for start, ends in edges_with_all_transfers.items():
                 weekday_edges_pre_walking[start] = {}
             weekday_edges_pre_walking[start][end] = time_tup
 
-# create a dict of all neighbors of a given station-- including after a transfer
-# This can be used to filter walk stations. Note that stations are NAME, not MTA ID
-# This is so all sub-stations are filtered (EG, separate platforms at atlantic)
+
+# create a dict of all neighbors of a given station-- including after a transfer.
+# This will be used to filter walk stations
 
 within_one_stop = {}
 
-# use sub_stops to find sub stops
-# query graph_without_transfers to find where they all lead
-# for all sub stops, add all of the next stops
+def get_transfers(stop):
+    '''look at all the potential endpoints and return only the transfers'''
+    transfers = []
+    for edge, time_tup in stop.items():
+        if time_tup[0] == 't':
+            transfers.append(edge)
+    return transfers
 
-for stop, subs in sub_stops.items():
-    neighbors = []
-    for sub in subs:
-        try:
-            next_stop = next_stop_by_stop[sub][:3]
-            if next_stop not in neighbors:
-                neighbors.append(get_name(next_stop_by_stop[sub][:3]))
-        except:
-            pass
-    within_one_stop[stop[:3]] = neighbors
+# within_one_stop should include:
+# next stop and its transfers
+# transfers and their next stops and their transfers
 
 
-# add walking transfers 
+for stop, next_stop in next_stop_by_stop.items():
+    if next_stop[0] not in weekday_edges_pre_walking:
+        print('missing: ', next_stop[0], get_name(next_stop[0]))
+    else:
+        next_transfers = get_transfers(weekday_edges_pre_walking[next_stop[0]]) #transfers of next stop
+        transfers = get_transfers(weekday_edges_pre_walking[stop]) #transfers of current stop
+        if transfers:
+            transfer_next_neighbors = []
+            transfer_nexts = [] # next stop of each transfer
+            for t in transfers:
+                try:
+                    n = next_stop_by_stop[t]
+                    transfer_nexts += n
+                    transfer_next_neighbors += get_transfers(weekday_edges_pre_walking[n[0]])
+                except KeyError:
+                    pass # ignore keyerror that arises when looking for next stop of final stops
+        full = next_stop + next_transfers + transfers + transfer_nexts + transfer_next_neighbors
+        within_one_stop[stop] = list(set(full))
 
-# 1. find distance nevins to hoyt-- 1/3 of a mile-- this is the max walk distance. It's about 6 minutes
+
+# within_one_stop is missing final stops and 1 random AR stop... code it in for now, find better solution TODO
+
+within_one_stop['H02N#AR'] = ['H01N#AR', 'H03N#AR', 'H03S#AR', 'A61N#AR', 'A61S#AR', 'A61S#AL', 'A61N#AL']
+
+missing = ['101N#1', '142S#1', '247S#2', '247S#5', '201N#2', '257S#3', '250S#4', '301N#3', '640S#6', '401N#4', '501N#5', '601N#6', '726S#7', '701N#7', '901S#GS', '902N#GS', 'A02N#AR', 'A02N#AL', 'A09N#C', 'A55S#C', 'H04N#H', 'H11S#AR', 'D13N#B', 'D26S#FS', 'D40S#B', 'D43S#D', 'D43S#F', 'D43S#N', 'D43S#Q', 'D01N#D', 'E01S#E', 'G08N#M', 'G08N#R', 'G05N#E', 'G05N#J', 'F27S#G', 'F01N#F', 'S01N#FS', 'G22N#G', 'H15S#H', 'M23S#J', 'L01N#L', 'L29S#L', 'M01S#M', 'R01N#N', 'R01N#W', 'R27S#W', 'Q05N#Q', 'R45S#R']
+
+for stop in missing:
+    within_one_stop[stop] = []
+
+
+# add walking transfers
+
+# 1. find distance nevins to hoyt-- 1/3 of a mile-- this is the max walk distance. Say it's 6 minutes
 
 nevins = [40.688246, -73.980492]
 hoyt = [40.690545, -73.985065]
@@ -477,18 +522,19 @@ b_sq = (nevins[1] - hoyt[1]) ** 2
 
 max_walk = math.sqrt(a_sq + b_sq)
 max_walk_time = 360
-wait_time = 420
 walk_per_second = max_walk_time / max_walk
 
 # 2. measure distance of every station to every other station!?
 
-weekday_edges = dict(weekday_edges_pre_walking)
+weekday_edges_with_walking = dict(weekday_edges_pre_walking)
 
 count = 0
 
+missing_from_within = []
+
 for start, ends in weekday_edges_pre_walking.items():
     for end in weekday_edges_pre_walking:
-        if get_name(end) != get_name(start) and end not in ends and end[:3] not in within_one_stop[start[:3]]:
+        if end != start and end not in within_one_stop[start]:
             start_lat, start_long = stations[start[:4]]['lat'], stations[start[:4]]['lon']
             end_lat, end_long = stations[end[:4]]['lat'], stations[end[:4]]['lon']
             a_sq = (start_lat - end_lat) ** 2
@@ -498,9 +544,21 @@ for start, ends in weekday_edges_pre_walking.items():
             if distance <= max_walk:
                 #print(get_name(start),' ', start, '\t to: ', get_name(end), ' ', end)
                 count += 1
-                time = math.ceil(walk_per_second * distance) + wait_time
-                weekday_edges[start][end] = ('w', time)
-print('Added {} walking edges'.format(count))
+                time = math.ceil(walk_per_second * distance) + WAIT_TIME
+                weekday_edges_with_walking[start][end] = ('w', time)
+
+
+print(count, ' walking edges added.')
+
+
+# add in two missing stations (?) #TODO debug why this is happening?
+
+weekday_edges = dict(weekday_edges_with_walking)
+
+weekday_edges['A65S#AL'] = {'A65N#AL': ('t', WAIT_TIME)}
+weekday_edges['H01N#AR'] = {'A61N#AR': ('r', 180)}
+
+
 
 # build node_children: for each node, all neighboring nodes (note that edges are directional)
 
@@ -522,45 +580,33 @@ for node, children in node_children.items():
     if node in children:
         node_children[node].remove(node)
 
-## # this double-commented section is a test to print possible next stops from a given train
-## def get_bound(direction):
-##     if direction == "N":
-##         return " Manhattan Bound "
-##     else:
-##         return " Brooklyn Bound "
-## 
-## station = '635N#6'
-## print(get_name(station))
-## for edge, time in weekday_edges[station].items(): 
-##     movement = 'Stay on train to arrive at the '
-##     if get_name(edge) == get_name(station):
-##         movement = "Transfer to "
-##     print(movement, get_bound(edge[-3:-2]), edge.split('#')[1]+'-train', "at ", edge, " in ", time, ' seconds.')
-
 
 name_to_stations = {}
 stations_with_full_name = dict(stations)
-# translates name (must be exact) to 
+just_names = []
+
 
 print('Creating name to MTA ID station dictionary... in both directions...')
 for node, children in node_children.items():
-    comp = [get_line_name(child) for child in children if get_name(child) == get_name(node)]
+    comp = [get_line_name(child) for child in children if get_name(child) == get_name(node) and weekday_edges[node][child][0]=='t']
     children_lines = sorted(list(set(comp)))
     name = get_name(node) + ' ' + '-'.join(children_lines)
+    if ' ' != name[-1]:
+        just_names.append(name)
     if name not in name_to_stations:
-        children = [child for child in children if get_name(child) == get_name(node)] + [node]
+        children = [child for child in children if get_name(child) == get_name(node) and weekday_edges[node][child][0]=='t'] + [node]
         name_to_stations[name] = children
     stations_with_full_name[node[:3]]['full_name'] = name
+
+just_names = sorted(list(set(just_names)))
+
 
 print('Writing all data to disk.')
 with open('./graph/station_names.json', 'w') as name_file:
     json.dump(name_to_stations, name_file, indent=2)
 
-# with open('./graph/station_to_name.json', 'w') as station_to_name_file:
-#     json.dump(station_to_name, station_to_name_file, indent=2)
-
 with open('./graph/all_names.json', 'w') as all_name_file:
-    json.dump(list(name_to_stations.keys()), all_name_file, indent=2)
+    json.dump(just_names, all_name_file, indent=2)
 
 with open('./graph/graph_network.json', 'w') as graph_file:
     json.dump(node_children, graph_file, indent=2)
@@ -571,4 +617,5 @@ with open('./graph/costs.json', 'w') as cost_file:
 with open('./graph/stations.json', 'w') as stations_file:
     json.dump(stations_with_full_name, stations_file, indent=2)
 
-# exported all of these which are then imported by the REST server to run the algo
+# exported all of these which are then imported by the server to run the algo
+
