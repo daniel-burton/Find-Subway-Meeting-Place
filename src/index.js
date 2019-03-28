@@ -29,6 +29,7 @@ class App extends React.Component {
       oneActive: 0,
       twoActive: 0,
       submitted: 0,
+      routesDisplayed:[]
     };
   }
 
@@ -45,8 +46,8 @@ class App extends React.Component {
     //on selecting an autocorrect item
     // 1. set value of related input to clicked value
     // 2. make autocomplete box go away
-    console.log(event.target.id + ' clicked!');
-    console.log(event.target.innerText);
+    //console.log(event.target.id + ' clicked!');
+    //console.log(event.target.innerText);
     let newState = {};
     let whichInput = event.target.id.split('-')[0];
     newState[whichInput] = event.target.innerText;
@@ -78,20 +79,45 @@ class App extends React.Component {
 
   handleClickResult = event => {
     let newState = {};
-    const target = event.target.innerText;
+    const target = event.target.id;
     if (this.state.routesDisplayed.includes(target)) {
-      newState['routesDisplayed'] = this.state.routesDisplayed.filter(
-        item => item !== target,
-      );
+      console.log('removing')
+      //if route currently displayed
+      //newState['routesDisplayed'] = this.state.routesDisplayed.filter(
+       // item => item !== target,
+      //);
     } else {
+      //if route currently not displayed
       newState['routesDisplayed'] = [
-        ...this.state.results,
-        event.target.innerText,
+        ...this.state.routesDisplayed,
+        target,
       ];
     }
     console.log(this.state.routesDisplayed);
     this.setState(newState);
   };
+
+  parseRoute(route) {
+    // s, w, r, t, e (start, walk, ride, transfer, end)
+    // line, name, trip_type
+    let steps = [];
+    route.map(step => {
+      let tripType = step.trip_type;
+      if (tripType === 's') {
+        steps.push(`Start your trip at ${step.name}.`); 
+      } else if (tripType === 'r') {
+        steps.push(`...pass ${step.name}.`);
+      } else if (tripType === 't') {
+        steps.push(`Transfer to the ${step.line} train ${step.name}.`);
+      } else if (tripType === 'w') {
+        steps.push(`Walk to the ${step.line} Train at ${step.name}.`);
+      } else if (tripType === 'e') {
+        steps.push(`Arrive at ${step.name}.`);
+      }
+      return null;
+    });
+    console.log(steps);
+  }
 
   render() {
     return (
@@ -127,6 +153,7 @@ class App extends React.Component {
               potentials={this.state.results}
               startOne={this.state.one}
               startTwo={this.state.two}
+              onClick={this.handleClickResult}
             />
           ) : (
             ''
