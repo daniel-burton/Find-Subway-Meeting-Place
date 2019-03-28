@@ -41,7 +41,6 @@ def print_response(re):
     for stop in re['route']:
         name = stop['name']
         line = get_route_name(stop['line'])
-        # precis = name + line # to make sure train is at actual final stop-- not another stop with same simple name
         trip_type = stop['trip_type']
         if trip_type == 's':
             announce.append('Start journey on the {} Train at {}'.format(line, name))

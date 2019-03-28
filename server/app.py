@@ -136,10 +136,16 @@ def parse_results(parents, costs, started, ended):
     type:  s     | w    | t        | r    | e
     means: start | walk | transfer | rail | end'''
 
+    get_off_flag = 0 #to see if next stop is walking or transfer
     trip = []
     now = (ended, 'e')
     while now[0] != started:
+        if get_off_flag == 1:
+            now = (now[0], now[1]+'g')
+            get_off_flag = 0
         trip.append(now)
+        if now[1] in ['w', 't']:
+            get_off_flag = 1
         now = parents[now[0]]
     trip.append(now)
 
@@ -149,12 +155,60 @@ def parse_results(parents, costs, started, ended):
         full = {'line':get_line(stop[0]), 'name':get_name(stop[0]), 'trip_type':trip_type}
         trip_dets.append(full)
         trip_type = stop[1]
-    trip_dets[-1]['trip_type'] = 'e'
+    #trip_dets[-1]['trip_type'] = 'e'
 
-    if trip_dets[1]['trip_type'] == 't':
+    if trip_dets[1]['trip_type'] in ['t', 'w']:
         trip_dets.pop(0)
-        trip_dets[0]['trip_type'] = 's'
+        if trip_dets[0]['trip_type'] == 't':
+            trip_dets[0]['trip_type'] = 's'
     return trip_dets
+
+def create_route_text(route):
+    '''create text explanation of each step in the route'''
+    print(route)
+    def get_route_name(name):
+        '''fix odd route names'''
+        if name == 'AR' or name== 'AL': #AL and AR are the branches of the A train
+            return 'A'
+        elif 'GC' in name:
+            return 'Grand Central Shuttle'
+        elif 'FA' in name:
+            return 'Franklin Ave. Shuttle'
+        elif 'R_' in name:
+            return 'Rockaway Shuttle'
+        else:
+            return name
+    complete_route = []
+    previous = ''
+    for stop in route:
+        text = ''
+        name = stop['name']
+        line = get_route_name(stop['line'])
+        trip_type = stop['trip_type']
+        if trip_type == 's':
+            text = 'Start journey on the {} Train at {}'.format(line, name)
+        elif trip_type == 'r':
+            text = '...pass {}...'.format(name)
+        elif trip_type == 't':
+            text = 'Within the station, transfer to the {} Train at {}.'.format(line, name)
+        elif trip_type == 'w':
+            if text != '' and text[-1] == ',':
+                text = 'Leave the station, then walk to the {} Train at {}.'.format(previous, line, name)
+            else:
+                text = 'Walk to the {} Train at {} and board.'.format(line, name)
+        elif trip_type == 'e':
+            text = 'Arrive at {}, your destination.'.format(name)
+        elif trip_type == 'rg':
+            text = 'Get off the train at {},'.format(name)
+        else:
+            text = 'error: {}'.format(trip_type)
+        previous = name
+        complete_route.append({'name':name, 'line':line, 'trip_type':trip_type, 'text':text})
+    if trip_type == 'r':
+        complete_route[-1]['text'] = 'Arrive at {}, your destination.'.format(name)
+    if complete_route[-1]['text'][0] != 'A':
+        complete_route.append({'name':name, 'line':line, 'trip_type':'e', 'text':'Arrive at {}, your destination.'.format(name)})
+    return complete_route
 
 def simplify_costs(costs):
     new = {}
@@ -193,8 +247,10 @@ def find_meeting_place(start_1, start_2, count):
     results = sorted(potential, key=lambda x: x['name'])[:count]
     for end in results:
         # append directions from both start points
-        end['route_1'] = parse_results(parents_1, costs_1, start_1, find_station(end['name']))
-        end['route_2'] = parse_results(parents_2, costs_2, start_2, find_station(end['name']))
+        route = parse_results(parents_1, costs_1, start_1, find_station(end['name']))
+        end['route_1'] = create_route_text(route)
+        route = parse_results(parents_2, costs_2, start_2, find_station(end['name']))
+        end['route_2'] = create_route_text(route)
     return results
 
 
@@ -226,9 +282,6 @@ def return_meeting_place(start_1, start_2, do_fuzz, count):
     start_2 = find_station(start_2, do_fuzz)
     potentials = find_meeting_place(start_1, start_2, count)
     return package_response(jsonify({'potentials':potentials}))
-    #to do: should also return routes for both users to each potential
-    # maybe just return potentials and parents, then calculate route on front end?
-    # the issue of it selecting a random start/stop substation...
 
 def test_case():
     return_route('Franklin Av 2-3-4-5', "Flushing - Main St 7", False)
