@@ -4,9 +4,13 @@
   margin-bottom:1em;
   }
 
-.minimum_label {
+.MinimumLabel {
   display: inline;
-  margin-left: .8em;
+  margin-left: 2em;
   margin-right: .8em;
   size:1em;
+}
+
+.MinimumDescription {
+  margin-left:1em;
 }

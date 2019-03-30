@@ -1,7 +1,23 @@
 .ResultTime {
-  font-weight:bold;
+  font-weight: bold;
 }
 
 .StationName {
   font-style: italic;
+}
+
+h3 {
+  font-size: 2em;
+}
+
+.Results {
+  margin-left: 1em;
+}
+
+.Result {
+  margin-left: 1.5em;
+  font-size:1.2em;
+  border-bottom: 1px solid gray;
+  padding-bottom: .2em;
+  margin-bottom: .5em;
 }

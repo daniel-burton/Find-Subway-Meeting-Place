@@ -1,1 +1,30 @@
+.BothRoutes {
+}
 
+.OneRoute0 {
+  /*float:left;
+  display:inline;*/
+  width:50%;
+  margin-left:1em;
+  padding-left:1em;
+  border-left:1px solid gray;
+}
+.OneRoute1 {
+  /*float:right;
+  display:inline;*/
+  width:50%;
+  margin-left:1em;
+  padding-left:1em;
+  border-left:1px solid gray;
+}
+
+.RouteTitle {
+  font-size:1em;
+  font-weight:normal;
+  width:100%;
+  text-decoration:underline;
+}
+
+.RouteStep {
+  margin-left:2em;
+}

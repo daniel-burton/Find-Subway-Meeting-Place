@@ -7,9 +7,9 @@ import stationNames from './stationNames';
 import './index.css';
 
 function makeURL(start1, start2, minimum) {
-  return encodeURI(
-    `http://127.0.0.1:5000/api/meeting/True/${start1}/${start2}/${minimum}`,
-  );
+  start1 = encodeURIComponent(start1);
+  start2 = encodeURIComponent(start2);
+  return `http://127.0.0.1:5000/api/meeting/True/${start1}/${start2}/${minimum}`;
 }
 
 async function getRoute(url) {
@@ -29,7 +29,7 @@ class App extends React.Component {
       oneActive: 0,
       twoActive: 0,
       submitted: 0,
-      routesDisplayed:[]
+      routesDisplayed: [],
     };
   }
 
@@ -46,8 +46,6 @@ class App extends React.Component {
     //on selecting an autocorrect item
     // 1. set value of related input to clicked value
     // 2. make autocomplete box go away
-    //console.log(event.target.id + ' clicked!');
-    //console.log(event.target.innerText);
     let newState = {};
     let whichInput = event.target.id.split('-')[0];
     newState[whichInput] = event.target.innerText;
@@ -77,24 +75,23 @@ class App extends React.Component {
     this.setState(newState);
   };
 
-  handleClickResult = event => {
-    let newState = {};
-    const target = event.target.id;
-    if (this.state.routesDisplayed.includes(target)) {
-      console.log('removing')
-      //if route currently displayed
-      //newState['routesDisplayed'] = this.state.routesDisplayed.filter(
-       // item => item !== target,
-      //);
-    } else {
-      //if route currently not displayed
-      newState['routesDisplayed'] = [
-        ...this.state.routesDisplayed,
-        target,
-      ];
-    }
-    console.log(this.state.routesDisplayed);
-    this.setState(newState);
+  makeHandleClickResult = instanceName => {
+    return () => {
+      console.log(instanceName);
+      let newState = {};
+      if (this.state.routesDisplayed.includes(instanceName)) {
+        newState['routesDisplayed'] = this.state.routesDisplayed.filter(
+          item => item !== instanceName,
+        );
+      } else {
+        newState['routesDisplayed'] = [
+          ...this.state.routesDisplayed,
+          instanceName,
+        ];
+      }
+      this.setState(newState);
+      console.log(this.state['routesDisplayed']);
+    };
   };
 
   parseRoute(route) {
@@ -104,7 +101,7 @@ class App extends React.Component {
     route.map(step => {
       let tripType = step.trip_type;
       if (tripType === 's') {
-        steps.push(`Start your trip at ${step.name}.`); 
+        steps.push(`Start your trip at ${step.name}.`);
       } else if (tripType === 'r') {
         steps.push(`...pass ${step.name}.`);
       } else if (tripType === 't') {
@@ -145,7 +142,7 @@ class App extends React.Component {
             active={this.state.twoActive}
           />
           <Minimum value={this.state['minimum']} onChange={this.handleRange} />
-          <button onClick={this.handleSubmit}>Calculate</button>
+          <button className='Submit' onClick={this.handleSubmit}>Calculate</button>
         </div>
         <div className="Results">
           {this.state.submitted === 1 ? (
@@ -153,7 +150,8 @@ class App extends React.Component {
               potentials={this.state.results}
               startOne={this.state.one}
               startTwo={this.state.two}
-              onClick={this.handleClickResult}
+              makeHandle={this.makeHandleClickResult}
+              routesDisplayed={this.state.routesDisplayed}
             />
           ) : (
             ''
