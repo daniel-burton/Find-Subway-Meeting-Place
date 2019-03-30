@@ -591,8 +591,10 @@ for node, children in node_children.items():
     comp = [get_line_name(child) for child in children if get_name(child) == get_name(node) and weekday_edges[node][child][0]=='t']
     children_lines = sorted(list(set(comp)))
     name = get_name(node) + ' ' + '-'.join(children_lines)
-    if ' ' != name[-1]:
-        just_names.append(name)
+    if '/' in name:
+        i = name.index('/')
+        name = name[:i] + ' & ' + name[i+1:]
+    just_names.append(name)
     if name not in name_to_stations:
         children = [child for child in children if get_name(child) == get_name(node) and weekday_edges[node][child][0]=='t'] + [node]
         name_to_stations[name] = children

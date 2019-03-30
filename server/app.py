@@ -112,7 +112,7 @@ def find_station(name, do_fuzz=False):
         first option out of possible sub-stations... resulting
         in "start at Atlantic on the 4, then transfer to the 2
         at Atlantic..." situations'''
-    name = parse.unquote_plus(name)
+    name = parse.unquote(name)
     if do_fuzz == False:
         return station_names[name][0]
     else:
