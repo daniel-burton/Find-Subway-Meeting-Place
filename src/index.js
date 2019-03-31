@@ -94,33 +94,12 @@ class App extends React.Component {
     };
   };
 
-  parseRoute(route) {
-    // s, w, r, t, e (start, walk, ride, transfer, end)
-    // line, name, trip_type
-    let steps = [];
-    route.map(step => {
-      let tripType = step.trip_type;
-      if (tripType === 's') {
-        steps.push(`Start your trip at ${step.name}.`);
-      } else if (tripType === 'r') {
-        steps.push(`...pass ${step.name}.`);
-      } else if (tripType === 't') {
-        steps.push(`Transfer to the ${step.line} train ${step.name}.`);
-      } else if (tripType === 'w') {
-        steps.push(`Walk to the ${step.line} Train at ${step.name}.`);
-      } else if (tripType === 'e') {
-        steps.push(`Arrive at ${step.name}.`);
-      }
-      return null;
-    });
-    console.log(steps);
-  }
-
   render() {
     return (
       <div className="App">
         <div className="Controls">
           <h1>Enter your starting points to get suggested meeting places.</h1>
+          <h2>Note that subway system is idealized and does not reflect time of day</h2>
           <StationInput
             id="one"
             parentId="one"
