@@ -1,3 +1,16 @@
 body {
-  background-color:#eaeaea;
+  background-color: #eaeaea;
 }
+
+.Controls {
+  border: 2px solid gray;
+}
+
+h1 {
+  padding: 0.5em;
+}
+
+.Submit {
+  font-size:1.0em;
+  margin:1em;
+  }

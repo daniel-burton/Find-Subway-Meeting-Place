@@ -1,21 +1,25 @@
 .InputBox {
-  display:inline;
-  /*position:relative;*/
+  display: inline;
   margin: 1em;
-  width:80em;
-  border: 1px solid gray;
-  padding:.5em;
-  }
+  width: 80em;
+  border: 2px solid gray;
+  padding: 0.5em;
+}
 
 .Input {
-  display:inline;
-  /*position:relative;*/
-  width:35em;
-  margin:0;
-  padding:0;
+  display: inline;
+  width: 35em;
+  margin: 0;
+  position: relative;
+  /*border:2px solid red;*/
+  padding: 0;
 }
 
 .StationInput {
-  margin: .5em;
-  font-size:.8em;
-  }
+  margin: 0.5em;
+  font-size: 0.8em;
+}
+
+label {
+  font-style: bold;
+}
