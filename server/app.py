@@ -1,9 +1,10 @@
-from flask import Flask, jsonify, make_response, render_template
+from flask import Flask, jsonify, make_response, send_from_directory
 import json
 from fuzzywuzzy import process, fuzz
 from urllib import parse
 
-app = Flask(__name__, static_folder="/home/dan/code/find_a_meeting_spot/build/static")
+app = Flask(__name__, static_folder="react/build")
+#app = Flask(__name__)
 
 with open('../graph/station_names.json', 'r') as names_file:
     '''all_names is for fuzzy matching, station_names finds MTA id from english name'''
@@ -267,6 +268,11 @@ def package_response(content):
     return response
 
 
+@app.route('/')
+def return_react_app():
+    #return '<p>hi</p>'
+    return send_from_directory('react/build', 'index.html')
+
 @app.route('/api/route/<string:do_fuzz>/<string:start>/<string:end>/', methods=['GET'])
 def return_route(start, end, do_fuzz):
     do_fuzz = bool(do_fuzz)
@@ -286,10 +292,6 @@ def return_meeting_place(start_1, start_2, do_fuzz, count):
 def test_case():
     return_route('Franklin Av 2-3-4-5', "Flushing - Main St 7", False)
 
-@app.route('/', methods=['Get'])
-def return_react_app():
-    return render_template('/home/dan/code/find_a_meeting_spot/build/index.html')
-    #return render_template('index.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
