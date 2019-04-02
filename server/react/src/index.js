@@ -99,7 +99,7 @@ class App extends React.Component {
       <div className="App">
         <div className="Controls">
           <h1>Enter your starting points to get suggested meeting places.</h1>
-          <h2>Note that subway system is idealized and does not reflect time of day</h2>
+          <h2>Note that the subway system is idealized and does not reflect time of day. Your next train is always just few minutes away...</h2>
           <StationInput
             id="one"
             parentId="one"
