@@ -9,7 +9,7 @@ chardet=3.0.4=py37_1
 click=7.0=py37_0
 cryptography=2.6.1=py37h1ba5d50_0
 flask=1.0.2=py37_1
-fuzzywuzzy=0.17.0=py_0
+#fuzzywuzzy=0.17.0=py_0
 idna=2.8=py37_0
 itsdangerous=1.1.0=py37_0
 jinja2=2.10=py37_0
@@ -25,7 +25,7 @@ pycparser=2.19=py37_0
 pyopenssl=19.0.0=py37_0
 pysocks=1.6.8=py37_0
 python=3.7.2=h0371630_0
-python-levenshtein=0.12.0=py37h14c3975_1000
+#python-levenshtein=0.12.0=py37h14c3975_1000
 readline=7.0=h7b6447c_5
 requests=2.21.0=py37_0
 setuptools=40.8.0=py37_0

@@ -3,8 +3,7 @@ import json, os
 from fuzzywuzzy import process, fuzz
 from urllib import parse
 
-app = Flask(__name__, static_folder="react/build")
-#app = Flask(__name__)
+app = Flask(__name__)
 
 with open('../graph/station_names.json', 'r') as names_file:
     '''all_names is for fuzzy matching, station_names finds MTA id from english name'''
@@ -270,7 +269,6 @@ def package_response(content):
 
 @app.route('/')
 def return_react_app():
-    #return '<p>hi</p>'
     return send_from_directory('react/build', 'index.html')
 
 @app.route('/static/<path:path>')
@@ -278,7 +276,7 @@ def return_static(path):
     if path !='' and os.path.exists('react/build/static/' + path):
         return send_from_directory('react/build/static/' , path)
     else:
-        return send_from_directory('react/build', 'index.html')
+        return send_from_directory('react/build/', 'index.html')
 
 @app.route('/api/route/<string:do_fuzz>/<string:start>/<string:end>/', methods=['GET'])
 def return_route(start, end, do_fuzz):
@@ -301,4 +299,4 @@ def test_case():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
