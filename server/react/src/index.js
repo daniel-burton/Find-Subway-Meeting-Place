@@ -9,7 +9,7 @@ import './index.css';
 function makeURL(start1, start2, minimum) {
   start1 = encodeURIComponent(start1);
   start2 = encodeURIComponent(start2);
-  return `http://127.0.0.1:5000/api/meeting/True/${start1}/${start2}/${minimum}`;
+  return `/api/meeting/True/${start1}/${start2}/${minimum}`;
 }
 
 async function getRoute(url) {
