@@ -26,6 +26,7 @@ function Results({
               key={potential.name + 'Title'}
               id={potential.name}
               onClick={makeHandle(potential.name)}>
+              <span className="Plus">{routesDisplayed.includes(potential.name) ? "-" : "+"}</span>
               <span>{potential.name}</span>
               {potential.time === potential.time_2 ? (
                 <span className="ResultTime"> {potential.time} minutes.</span>
@@ -44,7 +45,6 @@ function Results({
                 </span>
               )}
             </div>
-            {/*//removed /div here*/}
             {!routesDisplayed.includes(potential.name) ? (
               ''
             ) : (
@@ -52,7 +52,7 @@ function Results({
                 <Routes potential={potential} />
               </div>
             )}
-            </div> {/*added this div*/}
+            </div>
           </div>
         );
       })}

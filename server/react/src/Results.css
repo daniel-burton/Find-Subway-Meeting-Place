@@ -16,8 +16,14 @@ h3 {
 
 .Result {
   margin-left: 1.5em;
-  font-size:1.2em;
+  font-size: 1.2em;
   border-bottom: 1px solid gray;
-  padding-bottom: .2em;
-  margin-bottom: .5em;
+  padding-bottom: 0.2em;
+  margin-bottom: 0.5em;
+}
+
+.Plus {
+  font-weight: bold;
+  margin-right: 1em;
+  font-size: 1.2em;
 }
