@@ -269,13 +269,19 @@ def package_response(content):
 
 @app.route('/')
 def return_react_app():
+    with open('log.txt', 'w') as log:
+        log.write("accessed at root")
     return send_from_directory('react/build', 'index.html')
 
 @app.route('/static/<path:path>')
 def return_static(path):
     if path !='' and os.path.exists('react/build/static/' + path):
+        with open('log.txt', 'w') as log:
+            log.write("accessed at static, serving {}".format(path))
         return send_from_directory('react/build/static/' , path)
     else:
+        with open('log.txt', 'w') as log:
+            log.write("accessed at static, serving index")
         return send_from_directory('react/build/', 'index.html')
 
 @app.route('/api/route/<string:do_fuzz>/<string:start>/<string:end>/', methods=['GET'])
@@ -288,6 +294,8 @@ def return_route(start, end, do_fuzz):
 
 @app.route('/api/meeting/<string:do_fuzz>/<string:start_1>/<string:start_2>/<int:count>', methods=['Get'])
 def return_meeting_place(start_1, start_2, do_fuzz, count):
+    with open('log.txt', 'w') as log:
+        log.write("accessed at meeting place, serving {} and {}".format(start_1, start_2))
     do_fuzz = bool(do_fuzz)
     start_1 = find_station(start_1, do_fuzz)
     start_2 = find_station(start_2, do_fuzz)
