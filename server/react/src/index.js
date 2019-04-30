@@ -14,9 +14,10 @@ function makeURL(start1, start2, minimum) {
 
 async function getRoute(url) {
   let output = await fetch(url).then(function(response) {
-    return response.json();
+    return response;
   });
-  return output;
+  console.log(output)
+  return output.json();
 }
 
 class App extends React.Component {
@@ -99,7 +100,7 @@ class App extends React.Component {
       <div className="App">
         <div className="Controls">
           <h1>Enter your starting points to get suggested meeting places.</h1>
-          <h2>Note that the subway system is idealized and does not reflect time of day. Your next train is always just few minutes away...</h2>
+          <h2>Note that the subway system is idealized and does not reflect time of day. Your next train is always just a few minutes away...</h2>
           <StationInput
             id="one"
             parentId="one"

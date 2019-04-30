@@ -3,7 +3,7 @@ import json, os
 from fuzzywuzzy import process, fuzz
 from urllib import parse
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="react/build")
 
 with open('../graph/station_names.json', 'r') as names_file:
     '''all_names is for fuzzy matching, station_names finds MTA id from english name'''
@@ -165,7 +165,6 @@ def parse_results(parents, costs, started, ended):
 
 def create_route_text(route):
     '''create text explanation of each step in the route'''
-    #print(route)
     def get_route_name(name):
         '''fix odd route names'''
         if name == 'AR' or name== 'AL': #AL and AR are the branches of the A train
@@ -275,6 +274,7 @@ def return_react_app():
 
 @app.route('/static/<path:path>')
 def return_static(path):
+    print('returning static file at {}'.format(path))
     if path !='' and os.path.exists('react/build/static/' + path):
         with open('log.txt', 'w') as log:
             log.write("accessed at static, serving {}".format(path))
