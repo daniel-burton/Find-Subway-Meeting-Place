@@ -230,7 +230,7 @@ def find_meeting_place(start_1, start_2, count):
         for stop, time in costs_1.items():
             time_to_other = costs_2[stop]
             if time + blur > time_to_other > time - blur:
-                potentials.append({'name': stop, 'time':time, 'time_2':time_to_other})
+                potentials.append({'name': stop, 'time': time, 'time_2': time_to_other})
         return potentials
 
     parents_1, costs_1 = dijkstra(start_1)
@@ -244,7 +244,17 @@ def find_meeting_place(start_1, start_2, count):
         retrying with looser parameters until sufficent count"""
         potential = recur_try(blur_factor, costs_1, costs_2)
         blur_factor += 1
-    results = sorted(potential, key=lambda x: x['name'])[:count]
+
+    results = sorted(potential, key=lambda x: x['time'])[:count]
+
+    limit = costs_1[get_full_name(start_2)]
+    print(limit)
+    while results[0]['time'] > limit:
+        blur_factor += 1
+        potential = recur_try(blur_factor, costs_1, costs_2)
+        results = sorted(potential, key=lambda x: x['time'])[:count]
+        print(results[0])
+
     for end in results:
         # append directions from both start points
         route = parse_results(parents_1, costs_1, start_1, find_station(end['name']))
