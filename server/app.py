@@ -51,6 +51,7 @@ def get_line_name(station):
 infinity = float('inf')
 
 def dijkstra(start):
+    '''modified from "Grokking Algorithms" by Aditya Bhargava '''
     '''goes through the full graph, starting at starting point, and returns costs and parents'''
     def make_costs(start):
         '''create new costs dictionary of cost to get to every other station from start
