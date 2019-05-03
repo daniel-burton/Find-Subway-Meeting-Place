@@ -248,7 +248,6 @@ def find_meeting_place(start_1, start_2, count):
     results = sorted(potential, key=lambda x: x['time'])[:count]
 
     limit = costs_1[get_full_name(start_2)]
-    print(limit)
     while results[0]['time'] > limit:
         blur_factor += 1
         potential = recur_try(blur_factor, costs_1, costs_2)
