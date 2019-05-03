@@ -11,7 +11,8 @@ class AutocompleteBox extends React.Component {
 
   render() {
     // escape regex characters
-    const re = new RegExp(this.props.inputValue.replace(/[#-}]/g, '\\$&'));
+    const re = new RegExp(this.props.inputValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    console.log(re)
     return (
       <div className="AutocompleteBox">
         {this.props.optionList
