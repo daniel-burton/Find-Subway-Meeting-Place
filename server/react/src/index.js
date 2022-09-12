@@ -9,8 +9,8 @@ import './index.css';
 function makeURL(start1, start2, minimum) {
   start1 = encodeURIComponent(start1);
   start2 = encodeURIComponent(start2);
-  return `/api/meeting/True/${start1}/${start2}/${minimum}`; //if running on real server
-  //return `http://127.0.0.1:5000/api/meeting/True/${start1}/${start2}/${minimum}`;//if running locally
+  //return `/api/meeting/True/${start1}/${start2}/${minimum}`; //if running on real server
+  return `http://127.0.0.1:5000/api/meeting/True/${start1}/${start2}/${minimum}`;//if running locally
 }
 
 async function getRoute(url) {
@@ -100,8 +100,8 @@ class App extends React.Component {
     return (
       <div className="App">
         <div className="Controls">
-          <h1>Enter your starting points to get suggested meeting places.</h1>
-          <h2>Note that the subway system is idealized and does not reflect time of day. Your next train is always just a few minutes away...</h2>
+          <h1>Enter your starting points to get suggested meeting places halfway between by travel time.</h1>
+          <h2>Note that the time between stations is averaged (based on December 2018 data) and does not reflect today's actual schedule. If no exact midpoint is found, the closest thing to a midpoint is returned.</h2>
           <StationInput
             id="one"
             parentId="one"

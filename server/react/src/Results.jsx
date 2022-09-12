@@ -14,7 +14,7 @@ function Results({
 
   return (
     <div className="Results">
-      <h2>Potential Meeting Spots:</h2>
+      <h3>Potential Meeting Spots:</h3>
       {potentials.map(potential => {
         return (
           /*return Name and Time if time same from both start points, otherwise
@@ -26,12 +26,12 @@ function Results({
               key={potential.name + 'Title'}
               id={potential.name}
               onClick={makeHandle(potential.name)}>
-              <span className="Plus">{routesDisplayed.includes(potential.name) ? "-" : "+"}</span>
-              <span>{potential.name}</span>
+              <span className="Plus">{routesDisplayed.includes(potential.name) ? "- " : "+"}</span>
+              <span className="ResultStationName">{potential.name}:</span>
               {potential.time === potential.time_2 ? (
                 <span className="ResultTime"> {potential.time} minutes.</span>
               ) : (
-                <span>
+                <span className='ResultDescription'>
                   <span className="ResultTime"> {potential.time} minutes</span>
                   <span>
                     {' '}
